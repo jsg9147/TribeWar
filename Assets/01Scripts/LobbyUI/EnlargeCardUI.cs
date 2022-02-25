@@ -1,0 +1,44 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
+
+public class EnlargeCardUI : MonoBehaviour
+{
+    [SerializeField] GameObject attackSet;
+
+    [SerializeField] TMP_Text cardName;
+    [SerializeField] Image cardImage;
+    [SerializeField] Image cardClassIcon;
+
+    [SerializeField] TMP_Text explanationText;
+
+    [SerializeField] TMP_Text attackText;
+    [SerializeField] TMP_Text costText;
+    [SerializeField] TMP_Text tribeText;
+
+    public Card card;
+
+    public void SetCardData(Card card)
+    {
+        this.card = card;
+        cardName.text = card.name;
+        cardImage.sprite = card.sprite;
+        explanationText.text = card.card_text;
+        cardClassIcon.sprite = card.cardType.typeIcon;
+        costText.text = card.cost.ToString();
+        tribeText.text = card.TribeStr();
+
+        if (card.cardType.card_category == CardCategory.Monster)
+        {
+            attackSet.SetActive(true);
+            attackText.text = card.GetBaseStat("BP").ToString();
+        }
+        else
+        {
+            attackSet.SetActive(false);
+        }
+    }
+}
