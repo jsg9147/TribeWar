@@ -99,14 +99,14 @@ public class SteamLobby : MonoBehaviour
 
     public void JoinLobby(CSteamID lobbyId)
     {
-        Debug.Log("로비에 참가 신청 : " + lobbyId.ToString());
+        Debug.Log("Try Join lobby");
         SteamMatchmaking.JoinLobby(lobbyId);
     }
 
     public void LeaveLobby()
     {
-        Debug.Log("로비를 나갔습니다");
-        if(currentLobby != null)
+        Debug.Log("Leave lobby");
+        if (currentLobby != null)
         {
             SteamMatchmaking.LeaveLobby(currentLobby);
         }
@@ -128,25 +128,22 @@ public class SteamLobby : MonoBehaviour
 
     public void OnLobbyCreated(LobbyCreated_t callback)
     {
-        string msg = "로비 생성 : ";
-
-        if(callback.m_eResult != EResult.k_EResultOK)
+        if (callback.m_eResult != EResult.k_EResultOK)
         {
             return;
         }
-        if(networkManager.isNetworkActive == false)
+        if (networkManager.isNetworkActive == false)
         {
             networkManager.StartHost();
         }
 
         SteamMatchmaking.SetLobbyData(
-            new CSteamID(callback.m_ulSteamIDLobby), 
-            HostAddressKey, 
+            new CSteamID(callback.m_ulSteamIDLobby),
+            HostAddressKey,
             SteamUser.GetSteamID().ToString());
 
-        //주소, 키값, 키의 벨류 순으로 추정
 
-        if(inviteRoom)
+        if (inviteRoom)
         {
             SteamMatchmaking.SetLobbyData(
             new CSteamID(callback.m_ulSteamIDLobby),
@@ -166,26 +163,17 @@ public class SteamLobby : MonoBehaviour
             GameValue);
         }
 
-        msg = inviteRoom ? msg + inviteCode : msg + GameKey;
-
-        Debug.Log(msg);
-        
         _createLobby = true;
     }
 
-
-    //초대 받았을때 동작.
     private void OnGameLobbyJoinRequested(GameLobbyJoinRequested_t callback)
     {
-        Debug.Log("로비에 초청 받음");
         SteamMatchmaking.JoinLobby(callback.m_steamIDLobby);
     }
 
-    //로비 진입시, 내가 로비 참여로 들어올때 동작.
     private void OnLobbyEntered(LobbyEnter_t callback)
     {
         currentLobby = new CSteamID(callback.m_ulSteamIDLobby);
-        Debug.Log("현재 참가한 로비 id: " + currentLobby);
         if (NetworkServer.active) { return; }
 
         string hostAddress = SteamMatchmaking.GetLobbyData(
@@ -200,36 +188,25 @@ public class SteamLobby : MonoBehaviour
 
     void OnGetLobbiesList(LobbyMatchList_t result)
     {
-        string msg = "생성된 로비 탐색 \n";
         string value;
-        
+
         value = _joinCodeRoom ? joinCode_InputText.text : GameKey;
 
         for (int i = 0; i < result.m_nLobbiesMatching; i++)
         {
             CSteamID lobbyID = SteamMatchmaking.GetLobbyByIndex(i);
-            
+
             if (SteamMatchmaking.GetLobbyData((CSteamID)lobbyID.m_SteamID, value) == GameValue)
             {
                 lobbyIDS.Add(lobbyID);
                 SteamMatchmaking.RequestLobbyData(lobbyID);
             }
         }
-        
-        if (_joinCodeRoom)
+
+        if (!_joinCodeRoom && lobbyIDS.Count == 0)
         {
-            msg = msg + "입장 코드 : " + value + "// 로비 탐색 결과 : " + lobbyIDS.Count;
+            MatchManager.instance.CreateNewLobby();
         }
-        else
-        {
-            if (lobbyIDS.Count == 0)
-                MatchManager.instance.CreateNewLobby();
-
-            msg = msg + "타입 : 빠른 매칭 탐색" + "로비 갯수 : " + lobbyIDS.Count;
-        }
-
-        Debug.Log(msg);
-
     }
 
     void OnGetLobbyInfo(LobbyDataUpdate_t result)
@@ -253,6 +230,7 @@ public class SteamLobby : MonoBehaviour
     public void StopMatching()
     {
         LeaveLobby();
+        LobbyUI.instance.StartButtonClick();
         networkManager.StopHost();
         networkManager.StopClient();
     }

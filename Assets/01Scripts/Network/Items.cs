@@ -30,14 +30,14 @@ public class Items : MonoBehaviour
     {
         string userID = WebMain.instance.userInfo.UserID;
         StartCoroutine(WebMain.instance.web.GetDeckItemList(userID, _createDeckCallback));
-        StartCoroutine(WebMain.instance.web.GetUserOwnItems(userID, _createUserItemsCallback));
+        StartCoroutine(WebMain.instance.web.GetUserCollection(userID, _createUserItemsCallback));
     }
 
     public IEnumerator RefreshItems(float time)
     {
         yield return new WaitForSeconds(time);
         string userID = WebMain.instance.userInfo.UserID;
-        StartCoroutine(WebMain.instance.web.GetUserOwnItems(userID, _createUserItemsCallback));
+        StartCoroutine(WebMain.instance.web.GetUserCollection(userID, _createUserItemsCallback));
         StartCoroutine(WebMain.instance.web.GetDeckItemList(userID, _createDeckCallback));
     }
 
@@ -48,7 +48,7 @@ public class Items : MonoBehaviour
         int deckIndex = -1;
         JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
         Dictionary<int, Dictionary<int, int>> deckIndexAndCardIndex = new Dictionary<int, Dictionary<int, int>>();
-        if(jsonArray != null)
+        if (jsonArray != null)
         {
             for (int i = 0; i < jsonArray.Count; i++)
             {
@@ -66,9 +66,9 @@ public class Items : MonoBehaviour
                     Dictionary<int, int> tempDeckItem = new Dictionary<int, int>();
                     tempDeckItem.Add(itemID, itemCount);
                     deckIndexAndCardIndex.Add(deckIndex, tempDeckItem);
-                }          
+                }
             }
-            foreach(var key in deckIndexAndCardIndex.Keys)
+            foreach (var key in deckIndexAndCardIndex.Keys)
             {
                 //WebMain.Inst.web.userDeckItem.Add(key, deckIndexAndCardIndex[key]);
             }
@@ -80,7 +80,7 @@ public class Items : MonoBehaviour
     {
         // Parsing json array string as an array
         JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
-        if(jsonArray != null)
+        if (jsonArray != null)
         {
             for (int i = 0; i < jsonArray.Count; i++)
             {

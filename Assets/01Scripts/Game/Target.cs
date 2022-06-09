@@ -31,7 +31,6 @@ public interface IComputedTarget
 {
 }
 
-// 플레이어 컨디션을 아직 지정 안함
 public abstract class PlayerTargetBase : Target, IPlayerTarget
 {
     // public List<PlayerCondition> conditions = new List<PlayerCondition>();
@@ -102,7 +101,7 @@ public class OpponentCard : CardTargetBase, IUserTarget
 {
     public override EffectTarget GetTarget()
     {
-        return EffectTarget.OpponentCard;
+        return EffectTarget.EnermyCard;
     }
 }
 
@@ -175,6 +174,14 @@ public class TribeTarget : CardTargetBase, IComputedTarget
     public override EffectTarget GetTarget()
     {
         return EffectTarget.TribeTarget;
+    }
+}
+
+public class TargetWarrior : CardTargetBase, IComputedTarget
+{
+    public override EffectTarget GetTarget()
+    {
+        return EffectTarget.TargetWarrior;
     }
 }
 

@@ -58,7 +58,10 @@ public class Stat
 
     public int baseValue
     {
-        get { return _baseValue; }
+        get
+        {
+            return _baseValue;
+        }
         set
         {
             var oldValue = _baseValue;
@@ -79,7 +82,7 @@ public class Stat
             // Apply all the modifiers.
             foreach (var modifier in modifiers)
             {
-                
+
                 value += modifier.value;
             }
 
@@ -120,7 +123,6 @@ public class Stat
         var oldValue = effectiveValue;
         var modifiersToRemove = new List<Modifier>(modifiers.Count);
 
-        // Ispermanent -> 지속인지 체크 
         var temporaryModifiers = modifiers.FindAll(x => !x.IsPermanent());
         foreach (var modifier in temporaryModifiers)
         {
@@ -135,7 +137,7 @@ public class Stat
             modifiers.Remove(modifier);
         }
         if (modifiersToRemove.Count > 0 && onValueChanged != null)
-        {   
+        {
             onValueChanged(oldValue, effectiveValue);
         }
     }

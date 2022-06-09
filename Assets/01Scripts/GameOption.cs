@@ -18,11 +18,20 @@ public class GameOption : MonoBehaviour
     private void Start()
     {
         InitUI();
+        SetResolution();
+    }
+
+    void SetResolution()
+    {
+        int setWidth = 1600;
+        int setHeight = 900;
+
+        Screen.SetResolution(setWidth, setHeight, false);
     }
 
     public void InitUI()
     {
-        for(int i = 0; i< Screen.resolutions.Length; i++)
+        for (int i = 0; i < Screen.resolutions.Length; i++)
         {
             if (Screen.resolutions[i].refreshRate == 60)
                 resolutions.Add(Screen.resolutions[i]);
@@ -32,10 +41,10 @@ public class GameOption : MonoBehaviour
 
         int optionNum = 0;
 
-        foreach(var item in resolutions)
+        foreach (var item in resolutions)
         {
             TMPro.TMP_Dropdown.OptionData option = new TMPro.TMP_Dropdown.OptionData();
-            option.text = item.width + " ¡¿ " + item.height;
+            option.text = item.width + " x " + item.height;
             resolutionDropdown.options.Add(option);
 
             if (item.width == Screen.width && item.height == Screen.height)

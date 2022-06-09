@@ -9,27 +9,20 @@ public class CardMove
     List<Coordinate> canMovePositionList;
     List<Coordinate> canAttackPositionList;
 
-    public bool Move(Entity targetEntity, Tile movePointTile)
+    public void Move(Entity targetEntity, Tile movePointTile)
     {
-        if(targetEntity == null) { return false; }
+        if(targetEntity == null) { return; }
 
-        if (movePointTile.tileState != TileState.empty || targetEntity.isDie) { return false; }
+        if (movePointTile.tileState != TileState.empty || targetEntity.isDie) { return; }
 
         FindCanMovePositionList(targetEntity);
 
-        if (CanMoveCoordinate(movePointTile.coordinate) == false) { return false; }
+        if (CanMoveCoordinate(movePointTile.coordinate) == false) { return; }
 
-        Coordinate beforeCoord = targetEntity.coordinate;
+        targetEntity.bottomTile.onEntity = null;
 
-        if (targetEntity.isMine)
-        {
-            movePointTile.tileState = TileState.onPlayerMonster;
-        }
-        else
-        {
-            movePointTile.tileState = TileState.onOpponentMonster;
-        }
-
+        movePointTile.onEntity = targetEntity;
+        
         MapManager.instance.mapData[targetEntity.coordinate.x, targetEntity.coordinate.y].tileState = TileState.empty;
 
         targetEntity.transformPos = movePointTile.transform.position;
@@ -38,12 +31,10 @@ public class CardMove
         targetEntity.coordinate = movePointTile.coordinate;
         targetEntity.attackable = false;
 
-        PlayLogControl.instance.Log_Sorter(LogCategory.Move, targetEntity, beforeCoord);
-
-        return true;
+        // PlayLogControl.instance.Log_Sorter(LogCategory.Move, targetEntity, beforeCoord);
     }
 
-    // 리턴값 입력해야함 
+
     public List<Coordinate> FindCanMovePositionList(Entity entity)
     {
         canMovePositionList = new List<Coordinate>();
@@ -70,6 +61,7 @@ public class CardMove
     public List<Coordinate> Can_Attack_Position(Entity fieldCard)
     {
         canAttackPositionList = new List<Coordinate>();
+
         switch (fieldCard.card.cardType.moveType)
         {
             case MoveType.Rook:
@@ -81,7 +73,7 @@ public class CardMove
             case MoveType.Queen:
                 canAttackPositionList.AddRange(cardPossibleMove.Rook_Distance(fieldCard, true));
                 canAttackPositionList.AddRange(cardPossibleMove.Bishop_Distance(fieldCard, true));
-                canAttackPositionList = canMovePositionList.Distinct().ToList();
+                canAttackPositionList = canAttackPositionList.Distinct().ToList();
                 break;
 
             default:

@@ -19,8 +19,6 @@ public class CameraEffect : MonoBehaviour
     public float mouseSpeed;
     public bool canMove = true;
 
-    private bool isClick = false;
-
     private void Start()
     {
         mainCamera = GetComponent<Camera>();
@@ -38,7 +36,6 @@ public class CameraEffect : MonoBehaviour
         SetGrayScale(false);
     }
 
-    // 모든 렌더링에서 이미지 렌더링을 완료후 받음, 게임 중에 작동
     private void OnRenderImage(RenderTexture _src, RenderTexture _dest)
     {
         if (effectMat == null)
@@ -53,8 +50,6 @@ public class CameraEffect : MonoBehaviour
         effectMat.SetFloat("_DarkAmount", isGrayscale ? 0.12f : 0);
     }
 
-    // 드래그 한 방향으로 일정 속도로 이동되게 해야하는데 지금은 마우스 움직인만큼 빨리 이동되서 이상함
-    // 추가적으로 드래그 하고 놨을때 관성처럼 이동이 조금은 되는게 좋을듯
     void Move_Camera_Position()
     {
         if (Input.GetMouseButtonDown(0))
@@ -63,7 +58,7 @@ public class CameraEffect : MonoBehaviour
             return;
         }
 
-        if (!Input.GetMouseButton(0)) 
+        if (!Input.GetMouseButton(0))
             return;
 
         if (entityManager.selectState || cardManager.selectState)
@@ -108,7 +103,6 @@ public class CameraEffect : MonoBehaviour
             transform.position = new Vector3(transform.position.x, -maxPosition, -100);
     }
 
-    // + 는 넓게 보기, - 는 크게 보기
     void ZoomTest()
     {
         mainCamera.orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * speed;
@@ -119,15 +113,15 @@ public class CameraEffect : MonoBehaviour
             maxPosition = 0;
 
 
-        if((mainCamera.orthographicSize * 2) + maxPosition > 90f)
+        if ((mainCamera.orthographicSize * 2) + maxPosition > 130f)
         {
-            mainCamera.orthographicSize = 45f;
+            mainCamera.orthographicSize = 65f;
             maxPosition = 0;
         }
-        if(mainCamera.orthographicSize <= 5)
+        if (mainCamera.orthographicSize <= 10)
         {
-            mainCamera.orthographicSize = 5;
-            maxPosition = 90 - (mainCamera.orthographicSize*2);
+            mainCamera.orthographicSize = 10;
+            maxPosition =  - (mainCamera.orthographicSize * 2);
         }
     }
 }

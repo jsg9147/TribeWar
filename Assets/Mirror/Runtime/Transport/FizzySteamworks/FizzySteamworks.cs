@@ -19,8 +19,6 @@ namespace Mirror.FizzySteam
 
         [Tooltip("Timeout for connecting in seconds.")]
         public int Timeout = 25;
-        [Tooltip("The Steam ID for your application.")]
-        public string SteamAppID = "480";
         [Tooltip("Allow or disallow P2P connections to fall back to being relayed through the Steam servers if a direct connection or NAT-traversal cannot be established.")]
         public bool AllowSteamRelay = true;
 
@@ -75,6 +73,7 @@ namespace Mirror.FizzySteam
 #else
                 SteamNetworkingUtils.InitRelayNetworkAccess();
 #endif
+
                 InitRelayNetworkAccess();
 
                 if (ServerActive())

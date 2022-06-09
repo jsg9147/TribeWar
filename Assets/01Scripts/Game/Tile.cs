@@ -13,22 +13,55 @@ public class Tile : MonoBehaviour
     Color originColor;
     Color setColor;
 
-    public Vector3 transformPos
-    {
-        get { return GetComponent<Transform>().position; }
-        set { GetComponent<Transform>().position = transformPos; }
-    }
+    public bool clickBlock = false;
+
 
     public Coordinate coordinate = new Coordinate();
 
     public bool canSelect;
-    public bool isMyMonster;
     public CanSpawn canSpawn = CanSpawn.nothing;
+
+
+    // ë”°ë¡œìˆëŠ” ì´ìœ ëŠ” outpostê°€ entity ë¶„ë¦¬ê°€ ì•ˆë˜ì—ˆê¸° ë•Œë¬¸
+    // ë‚˜ì¤‘ì— ë¶„ë¦¬í•´ì„œ í•˜ë‚˜ë¡œ ë§Œë“¤ì–´ì•¼í•¨
     public TileState tileState = TileState.empty;
+    public Entity onEntity;
 
     bool can_TileColor_Change = true;
 
-    // °ÅÁ¡ Ç¥½Ã±â´É
+    public bool isEmpty
+    {
+        get
+        {
+            bool isEmpty = onEntity == null && outpost.isActive == false;
+            return isEmpty;
+        }
+    }
+
+    public EntityBelong onTarget
+    {
+        get
+        {
+            if (onEntity != null)
+            {
+                return onEntity.belong;
+            }
+            return EntityBelong.None;
+        }
+    }
+
+    public Vector3 transformPos
+    {
+        get
+        {
+            return GetComponent<Transform>().position;
+        }
+        set
+        {
+            GetComponent<Transform>().position = transformPos;
+        }
+    }
+
     public void OutpostSetActive(int life, bool isMine)
     {
         outpost.Setup(life, isMine, coordinate);
@@ -40,37 +73,37 @@ public class Tile : MonoBehaviour
         }
         else
         {
-            tileState = TileState.opponentOutpost;
+            tileState = TileState.enermyOutpost;
         }
     }
+
     public void Outpost_Life_Setup() => outpost.LifeSetup();
 
     public void SetOriginColor(Color color) => originColor = color;
     public void ChangeTileColor(Color color) => tileImage.material.color = color;
     public void ResetColor() => tileImage.material.color = originColor;
-    
-    public void SetMonster(Entity spawnMonster)
-    {
-        if(spawnMonster.isMine)
-        {
-            tileState = TileState.onPlayerMonster;
-        }
-        else
-        {
-            tileState = TileState.onOpponentMonster;
-        }
-        isMyMonster = spawnMonster.isMine;
-    }
+
+    //public void SetMonster(Entity entity)
+    //{
+    //    if (entity.isMine)
+    //    {
+    //        tileState = TileState.onPlayerMonster;
+    //    }
+    //    else
+    //    {
+    //        tileState = TileState.onEnermyEntity;
+    //    }
+    //}
 
     public void SetupSelectOutpost(bool player)
     {
-        // ÄÚµå ¼öÁ¤Áß jsg
-        if(player)
+        if (player)
             tileState = TileState.playerOutpost;
         else
-            tileState = TileState.opponentOutpost;
+            tileState = TileState.enermyOutpost;
     }
 
+    #region mouse Action
     private void OnMouseEnter()
     {
         if (GameManager.instance?.clickBlock ?? true)
@@ -104,9 +137,11 @@ public class Tile : MonoBehaviour
     {
         if (GameManager.instance?.clickBlock ?? true)
             return;
+        if (clickBlock)
+            return;
 
         MapManager.instance?.SetupOutpost(this);
-
+        MapManager.instance?.Select_Effect_Tile(this);
     }
 
     private void OnMouseExit()
@@ -137,16 +172,12 @@ public class Tile : MonoBehaviour
         {
             EntityManager.instance.selectTile = null;
         }
-
-        
-
     }
+    #endregion
 
-    // ³ªÁß¿¡ »öº¯È­°¡ ¾Æ´Ï¶ó ÀÌµ¿ °¡´ÉÇ¥½Ã¸¦ ¿ÀºêÁ§Æ®·Î ÇÒ°æ¿ì ¿ÀºêÁ§Æ® È°¼ºÈ­·Î ¹Ù²Ù¸é µÉµí
-    // ¼ÒÈ¯µÈ Ä«µå Å¬¸¯½Ã ÀÌµ¿°¡´É ±¸¿ª º¸¿©ÁÖ´Â ÇÔ¼ö
-    public void CanMovePos_ChangeTheColor(bool changeColor, Color color)
+    public void ColorChange_Rock(bool changeColor, Color color = new Color())
     {
-        if(changeColor)
+        if (changeColor)
         {
             ChangeTileColor(color);
             setColor = color;

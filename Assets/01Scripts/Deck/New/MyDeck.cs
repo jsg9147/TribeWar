@@ -19,9 +19,9 @@ public class MyDeck : MonoBehaviour
     {
         myDeck = deck;
         representCard = myDeck.representCard;
-        myDeckTitle.text = deck.title;
+        myDeckTitle.text = deck.name;
 
-        if(representCard != null)
+        if (representCard != null)
             representCardImage.sprite = representCard.sprite;
 
     }
@@ -30,10 +30,5 @@ public class MyDeck : MonoBehaviour
     {
         select_Background.SetActive(selected);
         this.select = selected;
-    }
-
-    private void OnMouseDown()
-    {
-        
     }
 }

@@ -32,17 +32,17 @@ public class CardPack
         return packCode;
     }
 
-    public void AddCard(int card_Num, string rarity)
+    public void AddCard(int card_Num, int rarity)
     {
-        switch(rarity)
+        switch (rarity)
         {
-            case "nomal":
+            case 1:
                 nomal.Add(card_Num);
                 break;
-            case "rare":
+            case 2:
                 rare.Add(card_Num);
                 break;
-            case "unique":
+            case 3:
                 unique.Add(card_Num);
                 break;
         }
@@ -70,11 +70,19 @@ public class CardPack
     public int GetRandomRare()
     {
         int random = Random.Range(0, rare.Count);
+        if (rare.Count == 0)
+        {
+            return GetRandomNomal();
+        }
         return rare[random];
     }
     public int GetRandomUnique()
     {
         int random = Random.Range(0, unique.Count);
+        if (unique.Count == 0)
+        {
+            return GetRandomRare();
+        }
         return unique[random];
     }
 }

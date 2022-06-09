@@ -39,26 +39,26 @@ public class GraveSet : MonoBehaviour
         graveCard.GetComponent<CardUI>().Setup(card);
 
         graveCard.name = card.name;
-        if (isMine)
-        {
-            if (playerGraveBackground.activeSelf)
-                playerGraveBackground.SetActive(false);
-            playerGraveCardUI.Setup(card);
-            playerGraveCards.Add(card);
-            playerGraveCardUI.Setup(card);
-            playerGraveCountText.text = playerGraveCards.Count.ToString();
-            graveCard.transform.SetParent(playerGraveContent.transform, false);
-        }
-        else
-        {
-            oppenentGraveCards.Add(card);
-            opponentGraveCardUI.Setup(card);
-            oppnentGraveCountText.text = oppenentGraveCards.Count.ToString();
-            graveCard.transform.SetParent(opponentGraveContent.transform, false);
+        // if (isMine)
+        // {
+        //     if (playerGraveBackground.activeSelf)
+        //         playerGraveBackground.SetActive(false);
+        //     playerGraveCardUI.Setup(card);
+        //     playerGraveCards.Add(card);
+        //     playerGraveCardUI.Setup(card);
+        //     playerGraveCountText.text = playerGraveCards.Count.ToString();
+        //     graveCard.transform.SetParent(playerGraveContent.transform, false);
+        // }
+        // else
+        // {
+        //     oppenentGraveCards.Add(card);
+        //     opponentGraveCardUI.Setup(card);
+        //     oppnentGraveCountText.text = oppenentGraveCards.Count.ToString();
+        //     graveCard.transform.SetParent(opponentGraveContent.transform, false);
 
-            if (opponentGraveBackground.activeSelf)
-                opponentGraveBackground.SetActive(false);
-            opponentGraveCardUI.Setup(card);
-        }
+        //     if (opponentGraveBackground.activeSelf)
+        //         opponentGraveBackground.SetActive(false);
+        //     opponentGraveCardUI.Setup(card);
+        // }
     }
 }

@@ -14,35 +14,38 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     public Sprite MagicFrame;
     public Sprite BackFrame;
 
+    public List<Sprite> Level_Sprite;
+
     [SerializeField] Image cardFrame;
     [SerializeField] Image classIcon;
     [SerializeField] TMP_Text nameTMP;
     [SerializeField] Image cardImage;
-    [SerializeField] List<GameObject> costImageObject;
-    [SerializeField] TMP_Text tribeTMP;
+    [SerializeField] Image level_Icon;
+
     [SerializeField] TMP_Text cardTextTmp;
-    [SerializeField] TMP_Text attackTMP;
-    [SerializeField] TMP_Text defenseTMP;
+    [SerializeField] TMP_Text BattlePointTMP;
+
+    [SerializeField] GameObject possible_Effect;
 
     public Card card;
     bool isFront;
     public PRS originPRS;
 
-    public void Setup(Card item, bool isFront)
+    public void Setup(Card card, bool isFront)
     {
         this.isFront = isFront;
 
-        if (item == null)
-            this.isFront = false;
+        if (card == null && isFront)
+            return;
 
         if (this.isFront)
         {
-            this.card = item;
+            this.card = card;
             cardImage.sprite = card.sprite;
             nameTMP.text = card.name;
             if (card.cardType.card_category == CardCategory.Monster)
             {
-                attackTMP.text = "ÀüÅõ·Â : " + card.GetBaseStat("BP").ToString();
+                BattlePointTMP.text = "ì „íˆ¬ë ¥ : " + card.GetBaseStat("bp").ToString();
 
                 if (card.cardType.moveType == MoveType.Rook)
                     cardFrame.sprite = RookFrame;
@@ -53,23 +56,16 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             }
             else
             {
-                attackTMP.text = "";
-                defenseTMP.text = "";
+                BattlePointTMP.text = "";
 
                 cardFrame.sprite = MagicFrame;
             }
-
-            for(int i = 0; i < card.cost; i++)
-            {
-                costImageObject[i].SetActive(true);
-            }
-
             if (cardTextTmp != null)
                 cardTextTmp.text = card.card_text.ToString();
             if (classIcon != null)
                 classIcon.sprite = card.cardType.typeIcon;
-            if (tribeTMP != null)
-                tribeTMP.text = card.TribeStr();
+
+            level_Icon.sprite = Level_Sprite[card.cost];
 
         }
         else
@@ -78,10 +74,9 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             classIcon.gameObject.SetActive(false);
             nameTMP.gameObject.SetActive(false);
             cardImage.gameObject.SetActive(false);
-            tribeTMP.gameObject.SetActive(false);
             cardTextTmp.gameObject.SetActive(false);
-            attackTMP.gameObject.SetActive(false);
-            defenseTMP.gameObject.SetActive(false);
+            BattlePointTMP.gameObject.SetActive(false);
+            possible_Effect.SetActive(false);
         }
     }
 
@@ -116,6 +111,8 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         cardFrame.color = changeColor;
     }
 
+    public void Can_Use_Effect(bool isActive) => possible_Effect?.SetActive(isActive);
+
 
     public void OnPointerEnter(PointerEventData eventData)
     {
@@ -127,14 +124,11 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             if (CardManager.instance != null)
                 CardManager.instance.CardMouseOver(this);
 
-            Color color = new Color32(146,233,255,255);
+            Color color = new Color32(146, 233, 255, 255);
 
             changeColor(color);
 
-            if (Input.GetKeyDown(KeyCode.Mouse1))
-            {
-                EnlargeCardManager.instance.Setup(this.card, isFront);
-            }
+
         }
     }
 
@@ -159,6 +153,12 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
         if (isFront)
         {
+            if (Input.GetKeyDown(KeyCode.Mouse1))
+            {
+                EnlargeCardManager.instance.Setup(this.card, isFront);
+                return;
+            }
+
             if (CardManager.instance != null)
                 CardManager.instance.CardMouseDown(this);
 

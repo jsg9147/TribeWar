@@ -5,8 +5,6 @@ using TMPro;
 
 public class Outpost : MonoBehaviour
 {
-    // Tile 과 Outpost 스크립트 정리가 필요 jsg
-
     [SerializeField] SpriteRenderer outpost_Image;
     [SerializeField] Sprite MyOutpost;
     [SerializeField] Sprite otherPlayerOutpost;
@@ -15,13 +13,21 @@ public class Outpost : MonoBehaviour
 
     public int life;
     public bool isMine;
-    public bool isDie;
+    public bool isDie = true;
+    public bool isActive = false;
 
-    // 공격시 entity 좌표를 여기서 가져다 쓰는데 z축이 틀어지는 문제 때문에 0 으로 해줌
+    public EntityBelong belong;
+
     public Vector3 transformPos
     {
-        get { return new Vector3(GetComponent<Transform>().position.x, GetComponent<Transform>().position.y, 0); }
-        set { GetComponent<Transform>().position = transformPos; }
+        get
+        {
+            return new Vector3(GetComponent<Transform>().position.x, GetComponent<Transform>().position.y, 0);
+        }
+        set
+        {
+            GetComponent<Transform>().position = transformPos;
+        }
     }
 
     public int idx;
@@ -32,6 +38,15 @@ public class Outpost : MonoBehaviour
         this.life = _life;
         this.isMine = _isMine;
 
+        if (isMine)
+        {
+            belong = EntityBelong.Player;
+        }
+        else
+        {
+            belong = EntityBelong.Enermy;
+        }
+
         if (_isMine)
         {
             outpost_Image.sprite = MyOutpost;
@@ -40,6 +55,7 @@ public class Outpost : MonoBehaviour
         {
             outpost_Image.sprite = otherPlayerOutpost;
         }
+        isActive = true;
 
         this.coordinate = _coordinate;
     }
@@ -55,10 +71,11 @@ public class Outpost : MonoBehaviour
         life -= damage;
         LifeTMP.text = life.ToString();
 
-        if(life <= 0)
+        if (life <= 0)
         {
             isDie = true;
             OutpostObj.SetActive(false);
+            LifeTMP.text = "";
             return true;
         }
         return false;

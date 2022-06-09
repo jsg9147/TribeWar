@@ -31,7 +31,7 @@ MonoBehaviour:
     touchInactiveGameObjects: 1
     touchDisabledComponents: 1
     missingReferences: 1
-    shadersWithErrors: 1
+    shadersWithErrors: 0
     missingComponents: 1
     missingPrefabs: 1
     duplicateComponents: 1

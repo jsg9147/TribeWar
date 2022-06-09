@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class DecreaseCardStatEffect : CardStatEffect
 {
-    public int value;
-    public int duration;
     public override void Resolve(Card card)
     {
         var modfier = new Modifier(-value, duration);
@@ -20,6 +18,21 @@ public class DecreaseCardStatEffect : CardStatEffect
         entity.UpdateStat();
     }
     public override void Reverse(Entity entity)
+    {
+        var modfier = new Modifier(value, duration);
+        entity.card.stats[statID].AddModifier(modfier);
+
+        entity.UpdateStat();
+    }
+
+    public override void Resolve(SingleEntity entity)
+    {
+        var modfier = new Modifier(-value, duration);
+        entity.card.stats[statID].AddModifier(modfier);
+
+        entity.UpdateStat();
+    }
+    public override void Reverse(SingleEntity entity)
     {
         var modfier = new Modifier(value, duration);
         entity.card.stats[statID].AddModifier(modfier);

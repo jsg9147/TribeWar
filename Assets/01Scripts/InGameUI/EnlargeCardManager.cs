@@ -5,12 +5,23 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class EnlargeCardManager : MonoBehaviour , IPointerDownHandler
+public class EnlargeCardManager : MonoBehaviour
 {
     [SerializeField] GameObject enlargeCard;
-    [SerializeField] EnlargeCardUI cardUIScript;
+    [SerializeField] CardUI cardUIScript;
 
-    public static EnlargeCardManager instance { get; private set; }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Mouse0))
+        {
+            EnlargeCard_Close();
+        }
+    }
+
+    public static EnlargeCardManager instance
+    {
+        get; private set;
+    }
     void Awake() => instance = this;
 
 
@@ -21,7 +32,7 @@ public class EnlargeCardManager : MonoBehaviour , IPointerDownHandler
             if (enlargeCard.activeSelf == false)
                 enlargeCard.SetActive(true);
 
-            cardUIScript.SetCardData(card);
+            cardUIScript.Setup(card);
         }
         else
         {
@@ -30,7 +41,7 @@ public class EnlargeCardManager : MonoBehaviour , IPointerDownHandler
     }
 
 
-    public void OnPointerDown(PointerEventData eventData)
+    public void EnlargeCard_Close()
     {
         if (enlargeCard.activeSelf)
             enlargeCard.SetActive(false);

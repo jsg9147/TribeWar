@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using Mirror;
-
+using TMPro;
 using UnityEngine;
 using DG.Tweening;
 
 public class EntityManager : MonoBehaviour
 {
-    public static EntityManager instance { get; set; }
+    public static EntityManager instance
+    {
+        get; set;
+    }
 
     private void Awake()
     {
@@ -16,18 +19,29 @@ public class EntityManager : MonoBehaviour
     }
 
     public GraveSet graveManager;
+    public AIManager aiManager;
+    public EffectManager effectManager;
 
     [SerializeField] CameraEffect cameraEffect;
     [SerializeField] GameObject entityPrefab;
-    [SerializeField] Transform myCardCreatePos;
-    [SerializeField] Transform otherCardCreatePos;
+    [SerializeField] Transform CardCreatePos;
     [SerializeField] Transform playerGraveyard;
     [SerializeField] Transform oppenentGraveyard;
     [SerializeField] GameObject TargetPicker;
+
+    [SerializeField][Header("플레이어 엔티티 부모")] Transform playerEntityParent;
+    [SerializeField][Header("적군 엔티티 부모")] Transform opponentEntityParent;
+    [SerializeField][Header("중립 엔티티 부모")] Transform neutralityEntityParent;
+
     [SerializeField] int maxMoveCount = 2;
+    [SerializeField] int maxSummonCount = 2;
+
+    public TMP_Text canMoveCountTMP;
+    public TMP_Text canSummonCountTMP;
 
     public List<Entity> playerEntities;
     public List<Entity> opponentEntities;
+    public List<Entity> aiEntities;
 
     public Tile selectTile;
     Coordinate entityCoordinateData;
@@ -36,78 +50,132 @@ public class EntityManager : MonoBehaviour
     public PlayLogControl gameLog;
 
     // 제물 소환을 위한 변수, CardManager 에서 사용해서 public을 못지웠음
-    public bool SelectTributeMode = false;
+    public bool SelectMonsterMode = false;
 
     // 마법카드 발동을 위한 변수
-    public EffectsSolver effectSolver = new EffectsSolver();
-    public EffectExplanation effectExplanation;
+    //public EffectsSolver effectSolver = new EffectsSolver();
 
     CardMove cardMove = new CardMove();
-    Battle battle = new Battle();
 
-
-    bool CanMouseInput => TurnManager.instance.isLoading == false && onOtherPanel == false;
-    bool onOtherPanel = false;
+    //bool CanMouseInput => TurnManager.instance.isLoading == false && onOtherPanel == false; 아마도 필요 없음
+    //bool onOtherPanel = false; 220603
+    public bool clickBlock;
 
     Entity selectEntity = null;
     public bool selectState => selectEntity != null;
 
-    Entity targetPickEntity;
-    List<Entity> tributeEntity = new List<Entity>();   
+    Entity enermyEntityPick;
 
-    string card_id;
-    int summonCount;
-    int moveCount = 0;
-    int entityIDCount = 0;
-    int cardCost = 0;
+    public List<Entity> tributeEntities = new List<Entity>();
+
+    int summonCount, canMoveCount, entityIDCount, cardCost;
+
+    // cardCost, card_id , effectCard 는 없앨수 있을꺼 같음
+
+    // 왜 따로??
+    string card_id; // 제물 및 타 효과시 임시 카드 저장 정보
     Card effectCard; // 카드 효과 발동시 정보를 임시 저장하는 변수
-    bool effect_Target_Select_State = false;
-    bool tributeSummon, tributeMagic;
 
+    //bool effect_Target_Select_State = false; //jsg
+    //bool moveEffect; //jsg 220603 effectManager 에서 쓰게 작동중
+
+    //bool tributeSummon, tributeMagic, targetEffect; // 늘 그렇듯 별견시 버그 없으면 삭제 220526 그냥 지우지 말고 찾아서 지워야함
+
+    public Dictionary<Tribe, int> tribeSummonCount;
+
+    [Header("이펙트 모음")]
+    [SerializeField] GameObject death_VFX;
+    [SerializeField] GameObject explosion_VFX;
+    [SerializeField] GameObject magic_VFX;
+    [SerializeField] GameObject arrow_VFX;
+    public GameObject portal_VFX;
+
+    [SerializeField][Header("원거리 공격 이펙트")] GameObject bullet_Obj;
 
     private void Start()
     {
-        TurnManager.OnTurnStarted += OnTurnStarted;
+        Init();
 
     }
     private void Update()
     {
-        if (targetPickEntity != null || (selectTile != null && selectTile.tileState == TileState.opponentOutpost))
-        {
-            ShowTargetPicker(true);
-        }
-        else
-        {
-            ShowTargetPicker(false);
-        }
+        //if (enermyEntityPick != null || (selectTile != null))
+        //{
+        //    ShowTargetPicker(true);
+        //}
+        //else
+        //{
+        //    ShowTargetPicker(false);
+        //}
     }
     private void OnDestroy()
     {
         TurnManager.OnTurnStarted -= OnTurnStarted;
     }
 
+    void Init()
+    {
+        canMoveCount = maxMoveCount;
+        summonCount = maxSummonCount;
+        canMoveCountTMP.text = "0";
+        canSummonCountTMP.text = "0";
+        TurnManager.OnTurnStarted += OnTurnStarted;
+        opponentEntities = new List<Entity>();
+        aiEntities = new List<Entity>();
+        tribeSummonCount = new Dictionary<Tribe, int>();
+
+        entityIDCount = 0;
+        cardCost = 0;
+
+        clickBlock = false;
+        //moveEffect = false;
+    }
+
+    void CountTMP_Update()
+    {
+        canMoveCountTMP.text = canMoveCount.ToString();
+        canSummonCountTMP.text = summonCount.ToString();
+    }
+
     public void MouseEventInit()
     {
         ChangeColor_CanMovePos(false, selectEntity);
         selectEntity = null;
-        targetPickEntity = null;
+        enermyEntityPick = null;
+    }
+
+    public List<Entity> All_Entities
+    {
+        get
+        {
+            List<Entity> allEntities = new List<Entity>(playerEntities);
+            allEntities.AddRange(opponentEntities);
+            allEntities.AddRange(aiEntities);
+
+            return allEntities;
+        }
+        
     }
 
     #region Entity 마우스 관련
     public void EntityMouseDown(Entity entity)
     {
-        selectEntity = entity;
-        if (CanMouseInput == false)
-        {
-            selectEntity = null;
+        if (clickBlock)
             return;
-        }
-        if (SelectTributeMode || effect_Target_Select_State)
+
+        selectEntity = entity;
+        //if (CanMouseInput == false)
+        //{
+        //    selectEntity = null;
+        //    return;
+        //}
+
+        if (SelectMonsterMode)
             return;
 
         if (entity.isMine && entity.attackable)
         {
-            if (moveCount < maxMoveCount)
+            if (canMoveCount >= 0)
             {
                 ChangeColor_CanMovePos(true, entity);
             }
@@ -121,12 +189,15 @@ public class EntityManager : MonoBehaviour
 
     public void EntityMouseUP(Entity entity)
     {
-        ChangeColor_CanMovePos(false, entity);
+        effectManager.Select_Effect_Target(entity);
 
-        if (CanMouseInput == false)
-            return;
+        //if (effect_Target_Select_State)
+        //{
+        //    GameManager.instance.localGamePlayerScript.CmdSelectEffectTarget(entity.id, entity.isMine, NetworkRpcFunc.instance.isServer);
+        //    return;
+        //}
 
-        if (entity.isMine && SelectTributeMode)
+        if (entity.isMine && SelectMonsterMode)
         {
             if (entity.canTribute && entity.isDie == false)
             {
@@ -134,73 +205,42 @@ public class EntityManager : MonoBehaviour
                 return;
             }
         }
-
-        if (effect_Target_Select_State)
+        else
         {
-            GameManager.instance.localGamePlayerScript.CmdSelectEffectTarget(entity.id, entity.isMine, NetworkRpcFunc.instance.isServer);
+            ChangeColor_CanMovePos(false, entity);
         }
 
-        
+        if (clickBlock)
+            return;
 
-        if (selectEntity != null && selectTile != null && selectEntity.attackable && moveCount < maxMoveCount)
-        {
-            if (targetPickEntity)
-            {
-                if(cardMove.Can_Attack_Position(selectEntity).Exists(x => x.vector3Pos == targetPickEntity.coordinate.vector3Pos))
-                    GameManager.instance.localGamePlayerScript.CmdAttack(selectEntity.id, targetPickEntity.id, NetworkRpcFunc.instance.isServer);
-            }
-
-            if (selectTile.tileState == TileState.opponentOutpost)
-            {
-                if (cardMove.Can_Attack_Position(selectEntity).Exists(x => x.vector3Pos == selectTile.coordinate.vector3Pos))
-                {
-                    GameManager.instance.localGamePlayerScript.CmdOutpostAttack(
-                        selectEntity.id, selectTile.outpost.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
-                }
-            }
-            else
-            { 
-                GameManager.instance.localGamePlayerScript.CmdCardMove(
-                    entity.id, entity.isMine, selectTile.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
-                moveCount = (GameManager.instance.localGamePlayerScript.canMove) ? moveCount++ : moveCount;
-                GameManager.instance.localGamePlayerScript.canMove = false;
-            }
-        }
+        Entity_Active();
         selectEntity = null;
-        targetPickEntity = null;
+        enermyEntityPick = null;
     }
 
     public void EntityMouseOver(Entity entity)
     {
         if (selectEntity == null)
             return;
-
-        if(entity.isMine == false)
+        if (clickBlock)
+            return;
+        
+        if (entity.isMine == false)
         {
-            targetPickEntity = entity;
+            enermyEntityPick = entity;
         }
     }
 
     public void EntityMouseDrag()
     {
-        if (!CanMouseInput || selectEntity == null)
-            return;
-        if (SelectTributeMode)
-            return;
-
-        //if (selectTile?.tileState != TileState.onOpponentMonster)
-        //{
-        //    targetPickEntity = null;
-        //}
+        //if (!CanMouseInput || selectEntity == null)
+        //    return;
+        //if (SelectMonsterMode)
+        //    return;
+        //if (clickBlock)
+        //    return;
     }
     #endregion
-
-    // CardEffects 스크립트에서 실행됨. 코드 정리할때 참고
-    public void AddRandomTargetLog(bool targetPlayer, int index)
-    {
-        Entity targetCard = targetPlayer ? playerEntities[index] : opponentEntities[index];
-        gameLog.Log_Sorter(LogCategory.Effected, targetCard);
-    }
 
     void OnTurnStarted(bool myTurn)
     {
@@ -209,12 +249,28 @@ public class EntityManager : MonoBehaviour
 
         selectEntity = null;
         AttackableReset(myTurn);
-        moveCount = 0;
-        SelectTributeMode = false;
-        effect_Target_Select_State = false;
-        tributeSummon = false;
-        tributeMagic = false;
-        summonCount = 0;
+        canMoveCount = maxMoveCount;
+        summonCount = maxSummonCount;
+        SelectMonsterMode = false;
+        //effect_Target_Select_State = false;
+
+        clickBlock = false;
+
+        //tributeSummon = false;
+        //tributeMagic = false;
+        //moveEffect = false;
+
+        effectManager.effect_Activated = false;
+
+        if (TurnManager.instance.firstTurn)
+            summonCount = maxSummonCount - 1;
+
+        if (NetworkRpcFunc.instance.isServer)
+        {
+            aiManager.Entity_Active(All_Entities);
+        }
+
+        CountTMP_Update();
     }
 
     // 카드 소환시 타일 좌표로 정렬시켜주는 함수
@@ -237,9 +293,13 @@ public class EntityManager : MonoBehaviour
             int y = (int)pos.y;
 
             if (CanMove)
-                MapManager.instance.mapData[x, y].CanMovePos_ChangeTheColor(changeColor, Color.blue);
+            {
+                MapManager.instance.mapData[x, y].ColorChange_Rock(changeColor, Color.yellow);
+            }
             else
-                MapManager.instance.mapData[x, y].CanMovePos_ChangeTheColor(changeColor, Color.black);
+            {
+                MapManager.instance.mapData[x, y].ColorChange_Rock(changeColor, Color.black);
+            }
         }
 
         foreach (var pos in cardMove.FindCanMovePositionList(entity))
@@ -247,99 +307,138 @@ public class EntityManager : MonoBehaviour
             int x = (int)pos.x;
             int y = (int)pos.y;
 
-            if(CanMove)
-                MapManager.instance.mapData[x, y].CanMovePos_ChangeTheColor(changeColor, Color.green);
+            if (CanMove)
+            {
+                MapManager.instance.mapData[x, y].ColorChange_Rock(changeColor, Color.green);
+            }
             else
-                MapManager.instance.mapData[x, y].CanMovePos_ChangeTheColor(changeColor, Color.red);
-        }       
+            {
+                MapManager.instance.mapData[x, y].ColorChange_Rock(changeColor, Color.red);
+            }
+        }
+    }
+
+    void Entity_Active()
+    {
+        if (selectEntity == null || selectTile == null)
+            return;
+        if (canMoveCount <= 0)
+            return;
+        if (selectEntity.attackable == false)
+            return;
+        
+        if (enermyEntityPick)
+        {
+            if (cardMove.Can_Attack_Position(selectEntity).Exists(x => x.vector3Pos == enermyEntityPick.coordinate.vector3Pos))
+                GameManager.instance.localGamePlayerScript.CmdAttack(selectEntity.id, enermyEntityPick.id, NetworkRpcFunc.instance.isServer);
+        }
+
+        if (selectTile.tileState == TileState.enermyOutpost)
+        {
+            if (cardMove.Can_Attack_Position(selectEntity).Exists(x => x.vector3Pos == selectTile.coordinate.vector3Pos))
+            {
+                GameManager.instance.localGamePlayerScript.CmdOutpostAttack(
+                    selectEntity.id, selectTile.outpost.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
+            }
+        }
+        else
+        {
+            GameManager.instance.localGamePlayerScript.CmdCardMove(
+                selectEntity.id, selectEntity.isMine, selectTile.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
+
+            if (GameManager.instance.localGamePlayerScript.canMove)
+            {
+                canMoveCount--;
+            }
+
+            if (canMoveCount == 0)
+                GameManager.instance.localGamePlayerScript.canMove = false;
+        }
+
+        CountTMP_Update();
+        //220603
+        //if (selectEntity != null && selectTile != null && selectEntity.attackable && canMoveCount >= 0)
+        //{
+        //    if (targetPickEntity)
+        //    {
+        //        if (cardMove.Can_Attack_Position(selectEntity).Exists(x => x.vector3Pos == targetPickEntity.coordinate.vector3Pos))
+        //            GameManager.instance.localGamePlayerScript.CmdAttack(selectEntity.id, targetPickEntity.id, NetworkRpcFunc.instance.isServer);
+        //    }
+
+        //    if (selectTile.tileState == TileState.opponentOutpost)
+        //    {
+        //        if (cardMove.Can_Attack_Position(selectEntity).Exists(x => x.vector3Pos == selectTile.coordinate.vector3Pos))
+        //        {
+        //            GameManager.instance.localGamePlayerScript.CmdOutpostAttack(
+        //                selectEntity.id, selectTile.outpost.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        GameManager.instance.localGamePlayerScript.CmdCardMove(
+        //            entity.id, entity.isMine, selectTile.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
+
+        //        if (GameManager.instance.localGamePlayerScript.canMove)
+        //        {
+        //            canMoveCount--;
+        //        }
+
+        //        if (canMoveCount == 0)
+        //            GameManager.instance.localGamePlayerScript.canMove = false;
+        //    }
+        //}
     }
 
     public void CardMove(int entityID, bool targetPlayer, Vector3 movePos, bool server)
     {
         bool isMine = NetworkRpcFunc.instance.isServer == server;
+        var targetEntity = All_Entities.Find(x => x.id == entityID);
+        
         Coordinate moveCoord = new Coordinate(movePos);
 
         if (isMine == false)
         {
             moveCoord.SetReverse(MapManager.instance.mapSize);
-            targetPlayer = !targetPlayer;
         }
 
-        var targetEntities = targetPlayer ? playerEntities : opponentEntities;
-
-        cardMove.Move(targetEntities.Find(x => x.id == entityID), MapManager.instance.coordinateTile(moveCoord));
-    }
-
-    public void Attack(int attackerID, int defenderID, bool server)
-    {
-        Entity attacker, defender;
-        bool isMine = NetworkRpcFunc.instance.isServer == server;
-        if (isMine)
-        {
-            attacker = playerEntities.Find(x => x.id == attackerID);
-            defender = opponentEntities.Find(x => x.id == defenderID);
-        }
-        else
-        {
-            attacker = opponentEntities.Find(x => x.id == attackerID);
-            defender = playerEntities.Find(x => x.id == defenderID);
-        }
-        
-        battle.Attack(attacker, defender);
-    }
-
-    public void OutpostAttack(int attackerID, Coordinate outpostCoord, bool server)
-    {
-        bool isMine = NetworkRpcFunc.instance.isServer == server;
-        if (isMine == false)
-            outpostCoord.SetReverse(MapManager.instance.mapSize);
-
-        Entity attacker;
-        Outpost targetOutpost = MapManager.instance.coordinateTile(outpostCoord).outpost;
-
-        if (isMine)
-            attacker = playerEntities.Find(x => x.id == attackerID);        
-        else
-            attacker = opponentEntities.Find(x => x.id == attackerID);
-
-        Debug.Log("공격자 : " + attacker.name + " 거점 좌표 : " + targetOutpost.coordinate.vector3Pos);
-
-        battle.Attack(attacker, targetOutpost, NetworkRpcFunc.instance.isServer);
+        cardMove.Move(targetEntity, MapManager.instance.coordinateTile(moveCoord));
     }
 
     #region 소환 관련
     void SummonBase(bool isMine, Card card, Tile summonTile)
     {
-        Vector3 spawnPos = isMine ? myCardCreatePos.position : otherCardCreatePos.position; ;
-        Entity emptyEntity = this.gameObject.AddComponent<Entity>();
-        var entityObject = Instantiate(entityPrefab, spawnPos, Utils.QI);
-
+        Vector3 spawnPos = CardCreatePos.position;
+        Transform entityParent = isMine ? playerEntityParent : opponentEntityParent;
         string sumnmonPlayer = isMine ? "Player : " : "Opponent : ";
+
+        if (isMine == false)
+            spawnPos.y = -spawnPos.y;
+
+        var entityObject = Instantiate(entityPrefab, spawnPos, Utils.QI, entityParent);
         entityObject.name = sumnmonPlayer + card.name + entityIDCount;
-        
-        if (!isMine)
-            entityObject.GetComponent<Entity>().OppenentFeildCardColor(Color.red);
 
         var entity = entityObject.GetComponent<Entity>();
-        entity.isMine = isMine;
-        entity.Setup(card);
+        entity.Setup(card, isMine);
+
         if (isMine)
         {
-            playerEntities.Add(emptyEntity);
-            int index = playerEntities.IndexOf(emptyEntity);
+            playerEntities.Add(entity);
+            int index = playerEntities.IndexOf(entity);
             playerEntities[index] = entity;
             entity.id = entityIDCount;
             entity.coordinate = summonTile.coordinate;
-            if (SelectTributeMode)
+            if (SelectMonsterMode)
             {
                 entity.coordinate = entityCoordinateData;
                 Tile targetTile = MapManager.instance.coordinateTile(entityCoordinateData);
-                targetTile.SetMonster(entity);
+                //targetTile.SetMonster(entity);
+                targetTile.onEntity = entity;
                 EntityAlignment(isMine, targetTile.transformPos);
             }
             else
             {
-                summonTile.SetMonster(entity);
+                //summonTile.SetMonster(entity);
+                summonTile.onEntity = entity;
                 EntityAlignment(isMine, summonTile.transformPos);
             }
         }
@@ -349,59 +448,139 @@ public class EntityManager : MonoBehaviour
             entity.id = entityIDCount;
             entity.coordinate = summonTile.coordinate;
 
-            summonTile.SetMonster(entity);
+            //summonTile.SetMonster(entity);
+            summonTile.onEntity = entity;
             EntityAlignment(isMine, summonTile.transformPos);
         }
-        entityIDCount++;
-        summonCount++;
 
-        gameLog.Log_Sorter(LogCategory.Summon ,entity);
+        if (tribeSummonCount.ContainsKey(card.cardType.tribe))
+        {
+            if (tribeSummonCount[card.cardType.tribe] > 0)
+                tribeSummonCount[card.cardType.tribe] = tribeSummonCount[card.cardType.tribe] - 1;
+            else
+                summonCount--;
+        }
+        else
+        {
+            summonCount--;
+        }
+        entityIDCount++;
+
+        CountTMP_Update();
+
+        // gameLog.Log_Sorter(LogCategory.Summon, entity);
 
         Destroy(gameObject.GetComponent<Entity>());
 
-        effectSolver.Add_Activated_Effect_To_Entity(entity);
+        effectManager.Add_Activated_Effect_To_Entity(entity);
+        //effectSolver.Add_Activated_Effect_To_Entity(entity);
 
-        if(card.ability.effect_Class != EffectClass.Battle)
+        if (card.ability.effect_Time != EffectTime.Battle)
         {
-            EffectTrigger(isMine, card.card_code);
+            effectManager.EffectTrigger(isMine, card.id);
         }
     }
 
-    public void SetCoordinateData(Vector3 coordVec)
+    // 카드 
+    public bool canUseCard(bool isMine, Card card)
     {
-        entityCoordinateData = new Coordinate(coordVec);
+        int tributeCount = playerEntities.Count;
+        if (card.cardType.card_category == CardCategory.Monster)
+        {
+            if (summonCount > 0)
+            {
+                foreach (var fieldCard in playerEntities)
+                {
+                    if (fieldCard.card.ability.effect_Time == EffectTime.Tribute)
+                    {
+                        if (fieldCard.card.ability.targetID == card.id)
+                            return true;
+
+                        foreach (var effect in fieldCard.card.ability.effects)
+                        {
+                            if (effect.effectClass == EffectClass.tribute)
+                            {
+                                tributeCount = tributeCount + effect.value;
+                            }
+                        
+                        }
+                    }
+                }
+
+                if (card.cost > 0 && tributeCount < card.cost)
+                {
+                    return false;
+                }
+                return true;
+            }
+
+            if (tribeSummonCount.ContainsKey(card.cardType.tribe))
+            {
+                if (tribeSummonCount[card.cardType.tribe] > 0)
+                {
+                    if (card.cost > 0 && playerEntities.Count < card.cost)
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+        else if (card.cardType.card_category == CardCategory.Magic)
+        {
+            if (card.cost > 0 && playerEntities.Count < card.cost)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        // 조건 다 안걸렸다는 뜻
+        return false;
+    }
+
+    bool canSummon(bool isMine, Card card, Tile tile)
+    {
+        if (tile == null || tile.tileState != TileState.empty)
+            return false;
+        if (tile.canSpawn == CanSpawn.nothing)
+            return false;
+        if (tile.canSpawn == CanSpawn.playerCanSpawn && isMine == false)
+            return false;
+        if (tile.canSpawn == CanSpawn.opponentCanSpawn && isMine)
+            return false;
+
+        if (tribeSummonCount.ContainsKey(card.cardType.tribe))
+        {
+            if (tribeSummonCount[card.cardType.tribe] > 0)
+                return true;
+        }
+
+        if (summonCount <= 0)
+            return false;
+
+        return true;
     }
 
 
     public void Summon(bool server, string card_id, Coordinate coordinate)
     {
-        bool isMine = server == NetworkRpcFunc.instance.isServer; ;
+        // bool isMine = server == NetworkRpcFunc.instance.isServer; 테스트중
+        bool isMine = server;
+
         Card card = CardDatabase.instance.CardData(card_id);
 
-
-        if(isMine == false)
-        {
+        if (isMine == false)
             coordinate.SetReverse(MapManager.instance.mapSize);
-        }
+
         Tile targetTile = MapManager.instance.coordinateTile(coordinate);
 
-        if (targetTile == null|| targetTile.tileState != TileState.empty)
-            return;
-        if (summonCount >= 2)
-            return;
-        if (TurnManager.instance.firstTurn && summonCount >= 1)
-            return;
-        if (targetTile.canSpawn == CanSpawn.nothing)
-            return;
-        if (targetTile.canSpawn == CanSpawn.playerCanSpawn && isMine == false)
-            return;
-        if (targetTile.canSpawn == CanSpawn.opponentCanSpawn && isMine)
+        if (canSummon(isMine, card, targetTile) == false)
             return;
 
         this.card_id = card_id;
 
         cardCost = card.cost;
-
         if (card.cost == 0)
         {
             SummonBase(isMine, card, targetTile);
@@ -412,48 +591,52 @@ public class EntityManager : MonoBehaviour
         {
             if (isMine && playerEntities.Count >= card.cost)
             {
-                GameManager.instance.localGamePlayerScript.CmdSetSummonCoord(targetTile.coordinate.vector3Pos);
-                onOtherPanel = true;
-                GameManager.instance.Confirmation("제물이 " + card.cost + "마리 필요합니다.\n" + "소환\n하시겠습니까?");
-                tributeSummon = true;
+                entityCoordinateData = new Coordinate(targetTile.coordinate.vector3Pos);
+                Select_Monster(true);
             }
-            return;
+            else if (isMine && playerEntities.Count <= card.cost)
+            {
+                foreach (var fieldCard in playerEntities)
+                {
+                    if (fieldCard.card.ability.effect_Time == EffectTime.Tribute)
+                    {
+                        if (fieldCard.card.ability.targetID == card.id)
+                        {
+                            entityCoordinateData = new Coordinate(targetTile.coordinate.vector3Pos);
+                            Select_Monster(true);
+                        }
+                    }
+                }
+            }
         }
     }
 
-    public void ConfirmSelect(bool select)
+
+    public void Select_Monster(bool isSummon)
     {
-        if (select)
+        GameManager.instance.Notification("몬스터를\n선택해주세요");
+        CardManager.instance.TributeSummonSet(false); // 제물소환시 소환할 카드 잠깐 안보이게함
+        if (isSummon)
         {
-            SelectTributeSummon();
+            foreach (var fieldEntity in playerEntities)
+            {
+                if (fieldEntity.card.ability.targetID == card_id)
+                {
+                    fieldEntity.ClickMark(true);
+                }
+            }
+
+            SelectMonsterMode = true;
         }
         else
         {
-            tributeSummon = false;
-            tributeMagic = false;
-        }
-        onOtherPanel = false;
-    }
-
-    void SelectTributeSummon()
-    {
-        if(tributeSummon)
-        {
-            GameManager.instance.Notification("제물을\n선택해주세요"); 
-            SelectTributeMode = true;
-            CardManager.instance.TributeSummonSet(false); // 제물소환시 소환할 카드 잠깐 안보이게함
-        }
-        else if(tributeMagic)
-        {
-            GameManager.instance.Notification("제물을\n선택해주세요"); // 이미지 너무 구려
-            SelectTributeMode = true;
-            CardManager.instance.TributeSummonSet(false); // 제물소환시 소환할 카드 잠깐 안보이게함
+            effectManager.effect_Activated = true;
         }
     }
 
     void TributeSummon(bool isMine, string card_id)
     {
-        if(!isMine)
+        if (!isMine)
             CardManager.instance.Remove_OhterPlayer_HandCard();
 
         Card card = CardDatabase.instance.CardData(card_id);
@@ -461,9 +644,9 @@ public class EntityManager : MonoBehaviour
         CardManager.instance.RemoveTargetCards(isMine);
 
 
-        foreach (var entity in tributeEntity)
+        foreach (var entity in tributeEntities)
         {
-            gameLog.Log_Sorter(LogCategory.Sacrifice, entity);
+            // gameLog.Log_Sorter(LogCategory.Sacrifice, entity);
             entity.isDie = true;
 
             UpdateEntityState(); // 죽는것과 제물을 구분해야하는가? 이펙트 생각하면 하는게 좋긴할듯 jsg
@@ -474,255 +657,348 @@ public class EntityManager : MonoBehaviour
 
         Tile targetTile = MapManager.instance.coordinateTile(entityCoordinateData);
         SummonBase(isMine, card, targetTile);
-        tributeEntity.Clear();
+        tributeEntities.Clear();
 
         cardCost = 0;
-        SelectTributeMode = false;
+        SelectMonsterMode = false;
     }
 
     void TributeMagic(bool isMine, string card_id)
     {
-        Card item = CardDatabase.instance.CardData(card_id);
+        Card card = CardDatabase.instance.CardData(card_id);
 
-        if (isMine)
-        {
-            foreach (var entity in tributeEntity)
-            {
-                // GameManager.instance.localGamePlayerScript.CmdSelectTribute(entity.id, isServer);
-                //OldNetworkManager.Inst.SelectedTribute(entity);
-            }
-        }
-        else
+        if (!isMine)
         {
             CardManager.instance.Remove_OhterPlayer_HandCard();
         }
 
         CardManager.instance.RemoveTargetCards(isMine);
 
-        foreach (var entity in tributeEntity)
+        foreach (var entity in tributeEntities)
         {
-            gameLog.Log_Sorter(LogCategory.Sacrifice , entity);
+            // gameLog.Log_Sorter(LogCategory.Sacrifice, entity);
             entity.isDie = true;
 
             UpdateEntityState(); // 죽는것과 제물을 구분해야하는가? 이펙트 생각하면 하는게 좋긴할듯 jsg
         }
-
-        GameManager.instance.localGamePlayerScript.CmdEffectSolve(item.card_code, NetworkRpcFunc.instance.isServer);
-        tributeEntity.Clear();
+        GameManager.instance.localGamePlayerScript.CmdEffectSolve(card.id, NetworkRpcFunc.instance.isServer);
+        tributeEntities.Clear();
 
         cardCost = 0;
-        SelectTributeMode = false;
+        SelectMonsterMode = false;
     }
 
-    public void SelectTribute(bool server, int entityID)
+    public void SelectMonster(bool server, int entityID)
     {
         bool isMine = NetworkRpcFunc.instance.isServer == server;
-        Entity entity;
-        if(isMine)
+        Entity entity = isMine ? playerEntities.Find(x => x.id == entityID) : opponentEntities.Find(x => x.id == entityID);
+
+        tributeEntities.Add(entity);
+
+        entity.ClickMark(false);
+        entity.canTribute = false;
+
+        int tribute_Count = tributeEntities.Count;
+
+        if (cardCost <= tributeEntities.Count)
         {
-            entity = playerEntities.Find(x => x.id == entityID);
+            if (CardDatabase.instance.CardData(card_id).cardType.card_category == CardCategory.Monster)
+                TributeSummon(isMine, card_id);
+
+            else if (CardDatabase.instance.CardData(card_id).cardType.card_category == CardCategory.Magic)
+                TributeMagic(isMine, card_id);
         }
         else
         {
-            entity = opponentEntities.Find(x => x.id == entityID);
-        }
-
-        entity.canTribute = false;
-        tributeEntity.Add(entity);
-
-        if (cardCost <= tributeEntity.Count)
-        {
-            if(CardDatabase.instance.CardData(card_id).cardType.card_category == CardCategory.Monster)
+            foreach (var tribute in tributeEntities)
             {
+                if (tribute.card.ability.effect_Time == EffectTime.Tribute)
+                {
+                    if (tribute.card.ability.targetID == card_id)
+                    {
+                        TributeSummon(isMine, card_id);
+                        return;
+                    }
+                    else
+                    {
+                        foreach (var effec in tribute.card.ability.effects)
+                        {
+                            print(effec.effectClass);
+                        }
+
+                        if (tribute.card.ability.effects.Exists(x => x.effectClass == EffectClass.tribute))
+                        {
+                            Effect effect = tribute.card.ability.effects.Find(x => x.effectClass == EffectClass.tribute);
+                            tribute_Count = tribute_Count + effect.value;
+                        }
+                    }
+                }
+            }
+            if (cardCost <= tribute_Count)
                 TributeSummon(isMine, this.card_id);
-            }
-            else if(CardDatabase.instance.CardData(card_id).cardType.card_category == CardCategory.Magic)
-            {
-                TributeMagic(isMine, card_id);
-            }
         }
     }
     #endregion
 
 
     #region Magic Card
-    IEnumerator DelaySelectTarget()
+    //IEnumerator DelaySelectTarget()
+    //{
+    //    yield return new WaitForSeconds(0.7f);
+    //    effect_Target_Select_State = true;
+    //}
+
+    public void ConfirmEffectTrigger(string msg = "타겟을\n 선택 하세요")
     {
-        yield return new WaitForSeconds(0.7f);
-        effect_Target_Select_State = true;
+        GameManager.instance.Notification(msg);
+        //StartCoroutine(DelaySelectTarget());
     }
 
-    // 마법카드 발동 (몬스터 소환시에도 불러오네)
-    // 코드가 여기 말고 Effect에 있어야한것 같음, 아니면 GameManager를 하나 만들어야함
-    public bool EffectTrigger(bool isMine, string card_id)
+    //public bool EffectTrigger(bool isMine, string card_id)
+    //{
+    //    if (selectTile == null && isMine)
+    //        return false;
+
+    //    effectCard = CardDatabase.instance.CardData(card_id);
+
+    //    if (effectSolver.EffectRequireExist(isMine, playerEntities, opponentEntities, effectCard) == false)
+    //        return false;
+
+    //    this.card_id = card_id;
+    //    cardCost = effectCard.cost;
+
+    //    if (effectCard.ability.effect_Time == EffectTime.Activated)
+    //    {
+    //        if (isMine)
+    //        {
+    //            effectSolver.player_Activated_Abilities.Add(effectCard.ability);
+    //        }
+    //        else
+    //        {
+    //            effectSolver.opponent_Activated_Abilities.Add(effectCard.ability);
+    //        }
+    //        effectSolver.Activated_Effect(effectCard.ability, isMine, playerEntities, opponentEntities);
+    //        return true;
+    //    }
+    //    else if (effectCard.ability.effect_Time == EffectTime.Triggered)
+    //    {
+    //        if (isMine) 
+    //        {
+    //            GameManager.instance.localGamePlayerScript.CmdEffectSolve(effectCard.id, NetworkRpcFunc.instance.isServer);
+    //        }
+    //        return true;
+    //    }
+
+    //    if (effectCard.cost == 0 || effectCard.cardType.card_category == CardCategory.Monster)
+    //    {
+    //        if (isMine)
+    //        {
+    //            GameManager.instance.localGamePlayerScript.CmdEffectSolve(effectCard.id, NetworkRpcFunc.instance.isServer);
+    //        }
+    //        return true;
+    //    }
+    //    else if (effectCard.cost > 0)
+    //    {
+    //        if (effectCard.cost <= tributeEntities.Count)
+    //        {
+    //            GameManager.instance.localGamePlayerScript.CmdEffectSolve(effectCard.id, NetworkRpcFunc.instance.isServer);
+    //            return true;
+    //        }
+
+    //        if (effectCard.cost <= playerEntities.Count && isMine)
+    //        {
+    //            Select_Monster(false);
+    //            //GameManager.instance.Confirmation("제물이 " + effectCard.cost + "마리 필요합니다.\n" + "사용\n하시겠습니까?");
+    //            // gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine);
+    //            //onOtherPanel = true;
+    //            //tributeMagic = true;
+    //        }
+    //    }
+    //    return false;
+    //}
+
+    //public void EffectSolve(string card_id, bool server)
+    //{
+    //    bool isMine = NetworkRpcFunc.instance.isServer == server;
+    //    Card effectCard = CardDatabase.instance.CardData(card_id);
+    //    if (effectCard.ability == null)
+    //        return;
+
+    //    switch (effectCard.ability.target.GetTarget())
+    //    {
+    //        case EffectTarget.TargetCard:
+    //            if (isMine)
+    //            {
+    //                if (effectCard.cardType.card_category == CardCategory.Monster)
+    //                {
+    //                    Select_Monster(false);
+    //                }
+    //                else
+    //                {
+
+    //                    //if (effectCard.ability.Tag.Contains("move"))
+    //                    //{
+    //                    //    moveEffect = true;
+    //                    //}
+    //                    ConfirmEffectTrigger();
+    //                }
+    //            }
+    //            break;
+
+    //        case EffectTarget.RandomCard:
+    //            if (playerEntities.Count != 0 || opponentEntities.Count != 0)
+    //            {
+    //                if (isMine)
+    //                {
+    //                    effectSolver.NonTargetEffectActive(effectCard, playerEntities, opponentEntities, server);
+    //                    UpdateEntityState();
+    //                }
+    //            }
+    //            break;
+    //        case EffectTarget.AllCards:
+    //            effectSolver.NonTargetEffectActive(effectCard, playerEntities, opponentEntities, server);
+    //            UpdateEntityState();
+    //            break;
+    //        case EffectTarget.TribeTarget:
+    //            if (isMine)
+    //            {
+    //                ConfirmEffectTrigger(effectCard.TribeStr() + " 타겟을\n선택해주세요");
+    //            }
+    //            break;
+    //        case EffectTarget.PlayerWarrior:
+    //            effectSolver.NonTargetEffectActive(effectCard, playerEntities, opponentEntities, server);
+    //            UpdateEntityState();
+    //            break;
+    //        case EffectTarget.Player:
+    //            effectSolver.PlayerTargetEffect(this, effectCard, isMine);
+    //            break;
+    //        default:
+    //            return;
+    //    }
+    //    // gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine); // 로그 추가
+    //}
+
+    //jsg
+    //public void Select_Effect_Target(int entityID, bool targetPlayer, bool server)
+    //{
+    //    bool isMine = server == NetworkRpcFunc.instance.isServer;
+
+    //    Entity targetEntity = All_Entities.Find(x => x.id == entityID);
+
+    //    if (targetEntity == null)
+    //        return;
+
+    //    EffectTarget effectTarget = effectCard.ability.target.GetTarget();
+
+    //    switch (effectTarget)
+    //    {
+    //        case EffectTarget.PlayerCard:
+    //            if (targetEntity.belong == EntityBelong.Player)
+    //            {
+    //                effect_Target_Select_State = false;
+    //            }
+    //            break;
+
+    //        case EffectTarget.EnermyCard:
+    //            if (targetEntity.belong == EntityBelong.Enermy)
+    //            {
+    //                effect_Target_Select_State = false;
+    //            }
+    //            break;
+
+    //        case EffectTarget.TargetCard:
+    //            {
+    //                effect_Target_Select_State = false;
+    //            }
+    //            break;
+
+    //        case EffectTarget.TribeTarget:
+    //            if (targetEntity.card.cardType.tribe == effectCard.cardType.tribe)
+    //                effect_Target_Select_State = false;
+    //            else
+    //                GameManager.instance.Notification(effectCard.TribeStr() + " 타겟을\n추가 선택 해주세요");
+    //            break;
+
+    //        case EffectTarget.Tile:
+    //            break;
+
+    //        default:
+    //            break;
+    //    }
+
+    //    if (moveEffect)
+    //    {
+    //        clickBlock = true;
+
+    //        MapManager.instance.SelectMode(targetEntity, effectCard.ability);
+    //    }
+    //    else if (moveEffect && isMine == false)
+    //    {
+
+    //    }
+    //    else
+    //    {
+    //        if (effect_Target_Select_State == false)
+    //        {
+    //            // gameLog.Log_Sorter(LogCategory.Effected, targetEntity);
+
+    //            foreach (var effect in effectCard.ability.effects)
+    //            {
+    //                effect.Resolve(targetEntity);
+    //            }
+    //            UpdateEntityState();
+    //        }
+    //    }
+    //}
+
+    public void Target_Effect_Solver(int entity_Id, Vector3 tilePos)
     {
-        if (selectTile == null && isMine)
-            return false;
+        List<Entity> allEntities = new List<Entity>(playerEntities);
+        allEntities.AddRange(opponentEntities);
 
-        effectCard = CardDatabase.instance.CardData(card_id);
+        Entity entity = allEntities.Find(x => x.id == entity_Id);
+        Coordinate movePos = new Coordinate(tilePos);
 
-        if (effectSolver.EffectRequireExist(!isMine, playerEntities, opponentEntities, effectCard) == false)
-            return false;
-        this.card_id = card_id;
-        cardCost = effectCard.cost;
+        Tile targetTile;
 
-        if (effectCard.ability.effect_Class == EffectClass.Activated)
+        if (entity.isMine)
+            targetTile = MapManager.instance.mapData[movePos.x, movePos.y];
+        else
         {
-            if (isMine)
-            {
-                effectSolver.player_Activated_Abilities.Add(effectCard.ability);
-            }
-            else
-            {
-                effectSolver.opponent_Activated_Abilities.Add(effectCard.ability);
-            }
-            effectSolver.Activated_Effect(effectCard.ability, isMine, playerEntities, opponentEntities);
-            gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine);
-        }
-        if (effectCard.cost == 0 || effectCard.cardType.card_category == CardCategory.Monster)
-        {
-            if(isMine)
-            {
-                GameManager.instance.localGamePlayerScript.CmdEffectSolve(effectCard.card_code, NetworkRpcFunc.instance.isServer);
-            }
-            return true;
-        }
-        else if(effectCard.cost > 0)
-        {
-            if (effectCard.cost <= tributeEntity.Count)
-            {
-                GameManager.instance.localGamePlayerScript.CmdEffectSolve(effectCard.card_code, NetworkRpcFunc.instance.isServer);
-                return true;
-            }
-
-            if(effectCard.cost <= playerEntities.Count && isMine)
-            {
-                GameManager.instance.Confirmation("제물이 " + effectCard.cost + "마리 필요합니다.\n" + "사용\n하시겠습니까?");
-                gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine);
-                onOtherPanel = true;
-                tributeMagic = true;
-            }
-        }
-        return false;
-    }
-
-    public void EffectSolve(string card_id, bool server)
-    {
-        bool isMine = NetworkRpcFunc.instance.isServer == server;
-        Card effectCard = CardDatabase.instance.CardData(card_id);
-
-        switch(effectCard.ability.target.GetTarget())
-        {
-            case EffectTarget.TargetCard:
-                if (isMine)
-                {
-                    StartCoroutine(DelaySelectTarget()); // SelectMagicTarget 변수를 딜레이주고 변경, jsg
-                    GameManager.instance.Notification("타겟을\n선택해주세요");
-                }
-                break;
-            case EffectTarget.RandomCard:
-                if (playerEntities.Count != 0 || opponentEntities.Count != 0)
-                {
-                    if (isMine)
-                    {
-                        effectSolver.NonTargetEffectActive(effectCard, playerEntities, opponentEntities, NetworkRpcFunc.instance.isServer);
-
-                        UpdateEntityState();
-                    }
-                }
-                break;
-            case EffectTarget.AllCards:
-                effectSolver.NonTargetEffectActive(effectCard, playerEntities, opponentEntities, NetworkRpcFunc.instance.isServer);
-                UpdateEntityState();
-                break;
-            case EffectTarget.TribeTarget:
-                if (isMine)
-                {
-                    StartCoroutine(DelaySelectTarget()); // SelectMagicTarget 변수를 딜레이주고 변경, jsg
-                    GameManager.instance.Notification(effectCard.TribeStr() + " 타겟을\n선택해주세요");
-                }
-                break;
-            default:
-                return;
+            movePos.SetReverse(MapManager.instance.mapSize);
+            targetTile = MapManager.instance.mapData[movePos.x, movePos.y];
         }
 
-        gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine); // 로그 추가
-    }
-
-    public void Select_Effect_Target(int entityID, bool targetPlayer, bool server)
-    {
-        bool isMine = server == NetworkRpcFunc.instance.isServer; ;
-
-        if (isMine == false)
-            targetPlayer = !targetPlayer;
-
-        var targetEntities = targetPlayer ? playerEntities : opponentEntities;
-        
-        Entity targetEntity = targetEntities.Find(x => x.id == entityID);
-
-        if(targetEntity == null) 
-            return;
-
-        EffectTarget effectTarget = effectCard.ability.target.GetTarget();
-
-        if (effectTarget == EffectTarget.PlayerCard && targetEntity.isMine == isMine)
-            effect_Target_Select_State = false;
-        else if (effectTarget == EffectTarget.OpponentCard && targetEntity.isMine != isMine)
-            effect_Target_Select_State = false;
-        else if (effectTarget == EffectTarget.TargetCard)
-            effect_Target_Select_State = false;
-        else if(effectTarget == EffectTarget.TribeTarget)
+        foreach (var effect in effectCard.ability.effects)
         {
-            if (targetEntity.card.cardType.tribe == effectCard.cardType.tribe)
-                effect_Target_Select_State = false;
-            else
-                GameManager.instance.Notification(effectCard.TribeStr() + " 타겟을\n선택해주세요");
+            effect.Resolve(this, entity, targetTile);
         }
-        if (effect_Target_Select_State == false)
-        {
-            gameLog.Log_Sorter(LogCategory.Effected ,targetEntity);
-            effectCard.ability.effect.Resolve(targetEntity);
-            UpdateEntityState();
-            effectCard = null;
-        }
-    }
-
-    // 랜덤 이펙트시 랜덤타겟 받는 함수인데.. 그냥 서버에서 랜덤으로 뿌리면 되지 않나?
-    // 이거 봤을때 별 문제 없으면 밑에 두개 삭제 해도 되는것, 그 밑에가 두개 포함해서 작동
-    public void OpponentTargetEffect(int entityID, string card_id, bool server)
-    {
-        bool isMine = server == NetworkRpcFunc.instance.isServer;
-        Entity targetEntity = 
-            isMine ? playerEntities.Find(x => x.id == entityID) : opponentEntities.Find(x => x.id == entityID);
-
-        gameLog.Log_Sorter(LogCategory.Effected, targetEntity);
-        effectSolver.ReceiveRandomEffect(targetEntity, card_id); // jsg
         UpdateEntityState();
+        effectCard = null;
+
+        MapManager.instance.MapTileInit();
     }
 
-    public void PlayerTargetEffect(int entityID, string card_id, bool server)
+    public GameObject VFX_Instatiate(Vector3 pos)
     {
-        bool isMine = server == NetworkRpcFunc.instance.isServer; ;
-        Entity targetEntity;
-        targetEntity = opponentEntities.Find(x => x.id == entityID);
+        GameObject portal = Instantiate(portal_VFX, pos, transform.rotation);
+        portal.transform.localScale = new Vector3(5, 5, 5);
 
-        gameLog.Log_Sorter(LogCategory.Effected, targetEntity);
-        effectSolver.ReceiveRandomEffect(targetEntity, card_id); // jsg
-        UpdateEntityState();
+        return portal;
+    }
+    public void Destroy_VFX(GameObject vfx_effect)
+    {
+        Destroy(vfx_effect);
     }
 
-    public void RandomTargetEffect(bool targetPlayer, int entityIndex, string card_id, bool server)
+
+    public void RandomTargetEffect(int entity_Id, string card_id)
     {
-        bool isMine = server == NetworkRpcFunc.instance.isServer;
+        Entity target_Entity = All_Entities.Find(x => x.id == entity_Id);
+        // gameLog.Log_Sorter(LogCategory.Effected, targetEntity);
+        //effectSolver.ReceiveRandomEffect(target_Entity, card_id); // jsg
+        effectManager.ReceiveRandomEffect(target_Entity, card_id); // jsg
 
-        targetPlayer = isMine ? targetPlayer : !targetPlayer;
-
-        Entity targetEntity = 
-            targetPlayer ? playerEntities[entityIndex] : opponentEntities[entityIndex];
-
-        gameLog.Log_Sorter(LogCategory.Effected, targetEntity);
-        effectSolver.ReceiveRandomEffect(targetEntity, card_id); // jsg
-        
         UpdateEntityState();
     }
 
@@ -730,15 +1006,17 @@ public class EntityManager : MonoBehaviour
     public void UpdateEntityState()
     {
         List<Entity> destroiedEntity = new List<Entity>();
-        foreach(var playerEntity in playerEntities)
+        foreach (var playerEntity in playerEntities)
         {
             if (playerEntity.isDie)
             {
-                if(playerEntity.card.ability.effect_Class == EffectClass.Activated)
+                if (playerEntity.card.ability.effect_Time == EffectTime.Activated)
                 {
-                    effectSolver.ReverseEffect(playerEntity, playerEntities, opponentEntities);
+                    effectManager.ReverseEffect(playerEntity, All_Entities);
+                    //effectSolver.ReverseEffect(playerEntity, playerEntities, opponentEntities);
                 }
                 MapManager.instance.mapData[playerEntity.coordinate.x, playerEntity.coordinate.y].tileState = TileState.empty;
+                MapManager.instance.mapData[playerEntity.coordinate.x, playerEntity.coordinate.y].onEntity = null;
                 GoToGraveyard(playerEntity);
                 destroiedEntity.Add(playerEntity);
             }
@@ -748,9 +1026,10 @@ public class EntityManager : MonoBehaviour
         {
             if (opponentEntity.isDie)
             {
-                if(opponentEntity.card.ability.effect_Class == EffectClass.Activated)
+                if (opponentEntity.card.ability.effect_Time == EffectTime.Activated)
                 {
-                    effectSolver.ReverseEffect(opponentEntity, playerEntities, opponentEntities);
+                    //effectSolver.ReverseEffect(opponentEntity, playerEntities, opponentEntities);
+                    effectManager.ReverseEffect(opponentEntity, All_Entities);
                 }
                 MapManager.instance.mapData[opponentEntity.coordinate.x, opponentEntity.coordinate.y].tileState = TileState.empty;
                 GoToGraveyard(opponentEntity);
@@ -764,12 +1043,12 @@ public class EntityManager : MonoBehaviour
                 playerEntities.Remove(destroyEntity);
             else if (opponentEntities.Contains(destroyEntity))
                 opponentEntities.Remove(destroyEntity);
+
         }
     }
 
     void GoToGraveyard(Entity entity)
     {
-        print(entity.isMine);
         Vector3 gravePosition = entity.isMine ? playerGraveyard.position : oppenentGraveyard.position;
 
         graveManager.AddGraveCard(entity.card, entity.isMine);
@@ -786,48 +1065,247 @@ public class EntityManager : MonoBehaviour
 
     #endregion
 
-    // CardManager로 이동해야함 jsg, 카드 드로우가 아니라 5장 고정이면서 사용 안되는중
-    // 마법 카드 효과 발동시 필드에 보여줬다 사라지는거..
-    public void DropHandCard(bool isMine, string card_id)
+    #region Battle
+
+    public void Attack(int attackerID, int defenderID, bool server)
     {
-        Card card = CardDatabase.instance.CardData(card_id);
-        Vector3 spawnPos;
+        bool isMine = NetworkRpcFunc.instance.isServer == server;
+
+        List<Entity> allEntities = new List<Entity>(playerEntities);
+        allEntities.AddRange(opponentEntities);
+
+        Entity attacker, defender;
+        Sequence sequence;
 
         if (isMine)
         {
-            spawnPos = myCardCreatePos.position;
+            attacker = allEntities.Find(x => x.id == attackerID);
+            defender = allEntities.Find(x => x.id == defenderID);
         }
         else
         {
-            spawnPos = otherCardCreatePos.position;
+            attacker = allEntities.Find(x => x.id == attackerID);
+            defender = allEntities.Find(x => x.id == defenderID);
         }
 
-        // 마법카드 이미지 따로 만들면 그거로 나오게 해야함 jsg
-        var entityObject = Instantiate(entityPrefab, spawnPos, Utils.QI);
-        if (!isMine)
-            entityObject.GetComponent<Entity>().OppenentFeildCardColor(Color.red);
-        var entity = entityObject.GetComponent<Entity>();
-        entity.Setup(card);
-        entity.isMine = isMine;
-        entity.isDie = true;
+        int attackerBP = attacker.GetEffectiveValue("bp");
+        int defenderBP = defender.GetEffectiveValue("bp");
 
-        GoToGraveyard(entity);
-        // 사용 용도가 애매한 함수라 로그가 나오면 안댐
-        //gameLog.Log_Sorter(LogCategory.Drop , card, isMine); // 로그 추가 
-        
-        Destroy(gameObject.GetComponent<Entity>());
+        if (defender.card.cardType.attack_type == AttackType.shooter)
+            attackerBP = attackerBP * 2;
+
+        attacker.GetComponent<Order>().SetMostFrontOrder(true);
+
+        Vector3 attackPosition = defender.transformPos;
+
+        ResolverEffect(attacker, defender);
+
+        if (attacker.card.cardType.attack_type == AttackType.shooter)
+        {
+            GameObject bullet = Instantiate(bullet_Obj, attacker.transformPos, transform.rotation) as GameObject;
+
+            sequence = DOTween.Sequence()
+                    .Append(bullet.transform.DOMove(attackPosition, 0.4f)).SetEase(Ease.InSine)
+                    .AppendCallback(() =>
+                    {
+                        GameObject spawnedVFX = Instantiate(explosion_VFX, defender.transform.position, transform.rotation) as GameObject;
+                        Destroy(spawnedVFX, 5f);
+                    }).OnComplete(() => Destroy(bullet, 1f));
+
+            defender.Damaged(attackerBP);
+        }
+        else
+        {
+            sequence = DOTween.Sequence()
+                    .Append(attacker.transform.DOMove(attackPosition, 0.4f)).SetEase(Ease.InSine)
+                    .AppendCallback(() =>
+                    {
+                        GameObject spawnedVFX = Instantiate(explosion_VFX, attackPosition, transform.rotation) as GameObject;
+                        attacker.Damaged(defenderBP);
+                        defender.Damaged(attackerBP);
+                        Destroy(spawnedVFX, 5f);
+                    }).OnComplete(() => AttackCallback(attacker, defender));
+        }
+
+        attacker.attackable = false;
+
+        canMoveCount--;
+
+        UpdateEntityState();
+
+
+        // PlayLogControl.instance.Log_Sorter(LogCategory.Attack, attacker, attackerBP, attacker.GetEffectiveValue("bp"));
+        // PlayLogControl.instance.Log_Sorter(LogCategory.Defend, defender, defenderBP, defender.GetEffectiveValue("bp"));
     }
+
+    public void OutpostAttack(int attackerID, Coordinate outpostCoord, bool server)
+    {
+        bool isMine = NetworkRpcFunc.instance.isServer == server;
+
+        if (isMine == false)
+            outpostCoord.SetReverse(MapManager.instance.mapSize);
+
+        Entity attacker;
+        Outpost outpost = MapManager.instance.coordinateTile(outpostCoord).outpost;
+
+        attacker = All_Entities.Find(x => x.id == attackerID);
+        attacker.GetComponent<Order>().SetMostFrontOrder(true);
+
+        Vector3 attackPosition = outpost.transformPos;
+
+        Sequence sequence = DOTween.Sequence()
+        .Append(attacker.transform.DOMove(attackPosition, 0.4f)).SetEase(Ease.InSine)
+        .AppendCallback(() =>
+        {
+            outpost.Damaged(attacker.GetEffectiveValue("bp"));
+            //PlayLogControl.instance.Log_Sorter(LogCategory.Outpost_Attack, attacker, outpost);
+        }).OnComplete(() => OutpostAttackCallback(attacker, outpost));
+    }
+
+    void AttackCallback(Entity attacker, Entity defender)
+    {
+        attacker.GetComponent<Order>().SetMostFrontOrder(false);
+
+        if (defender.isDie)
+        {
+            defender.bottomTile.tileState = TileState.empty;
+
+            if (attacker.isDie == false)
+            {
+                Sequence sequence = DOTween.Sequence()
+                .Append(defender.transform.DOShakePosition(0.5f))
+                .Append(defender.transform.DOScale(Vector3.one, 0.3f)).SetEase(Ease.OutCirc)
+                .Append(attacker.transform.DOMove(defender.transformPos, 0.1f).SetEase(Ease.InSine))
+                .AppendCallback(() =>
+                {
+                    if (attacker.card.cardType.attack_type != AttackType.shooter)
+                        cardMove.Move(attacker, defender.bottomTile);
+                    else
+                        attacker.MoveTransform(attacker.bottomTile.transformPos, true, 0.5f);
+                });
+            }
+            else
+            {
+                attacker.bottomTile.tileState = TileState.empty;
+            }
+        }
+        else
+        {
+            Sequence sequence = DOTween.Sequence()
+                .Append(attacker.transform.DOShakePosition(0.5f))
+                .AppendCallback(() =>
+                {
+                    if (attacker.card.cardType.attack_type != AttackType.shooter)
+                        cardMove.AfterAttackMove(attacker, defender.coordinate); // 공격후 디펜더 바로앞으로 이동시키는것
+                    else
+                        attacker.MoveTransform(attacker.bottomTile.transformPos, true, 0.5f);
+                });
+        }
+
+        attacker.attackable = false;
+        UpdateEntityState();
+    }
+
+    void OutpostAttackCallback(Entity attacker, Outpost outpost)
+    {
+        Tile outpostTile = MapManager.instance.mapData[outpost.coordinate.x, outpost.coordinate.y];
+
+        attacker.GetComponent<Order>().SetMostFrontOrder(false);
+
+        if (outpost.isDie)
+        {
+            outpostTile.tileState = TileState.empty;
+
+            Sequence sequence = DOTween.Sequence()
+                .Append(outpost.transform.DOShakePosition(0.5f))
+                .Append(attacker.transform.DOMove(outpost.transformPos, 0.1f).SetEase(Ease.InSine))
+                .AppendCallback(() =>
+                {
+                    if (attacker.card.cardType.attack_type != AttackType.shooter)
+                        cardMove.Move(attacker, outpostTile);
+
+                    MapManager.instance.OutpostDestroy(outpost, attacker.isMine);
+
+                    outpostTile.outpost_object.SetActive(false);
+                    CheckGameResult();
+                });
+        }
+        else
+        {
+            Sequence sequence = DOTween.Sequence()
+                .Append(outpost.transform.DOShakePosition(0.5f))
+                .AppendCallback(() =>
+                {
+                    if (attacker.card.cardType.attack_type != AttackType.shooter)
+                        cardMove.AfterAttackMove(attacker, outpostTile.coordinate);
+                    else
+                        attacker.MoveTransform(attacker.bottomTile.transformPos, true, 0.5f);
+                });
+        }
+        attacker.attackable = false;
+        UpdateEntityState();
+    }
+
+    void ResolverEffect(Entity attacker, Entity defender)
+    {
+        if (attacker.card.ability.effect_Time == EffectTime.Battle)
+        {
+            if (attacker.card.ability.target.GetTarget() == EffectTarget.TargetCard)
+            {
+                foreach (var effect in attacker.card.ability.effects)
+                {
+                    effect.Resolve(defender);
+                }
+            }
+            else if (attacker.card.ability.target.GetTarget() == EffectTarget.ThisCard)
+            {
+                foreach (var effect in attacker.card.ability.effects)
+                {
+                    effect.Resolve(attacker);
+                }
+            }
+        }
+
+        if (defender.card.ability.effect_Time == EffectTime.Battle)
+        {
+            if (defender.card.ability.target.GetTarget() == EffectTarget.TargetCard)
+            {
+                foreach (var effect in defender.card.ability.effects)
+                {
+                    effect.Resolve(attacker);
+                }
+            }
+            else if (defender.card.ability.target.GetTarget() == EffectTarget.ThisCard)
+            {
+                foreach (var effect in defender.card.ability.effects)
+                {
+                    effect.Resolve(defender);
+                }
+            }
+        }
+    }
+
+    void CheckGameResult()
+    {
+        if (MapManager.instance.livePlayerOutpost <= 0)
+            GameManager.instance.GameResult(true);
+
+        if (MapManager.instance.liveOpponentOutpost <= 0)
+            GameManager.instance.GameResult(false);
+    }
+
+    #endregion
 
     // 공격시 조준표시 나오게 하는 함수
     private void ShowTargetPicker(bool isShow)
     {
-        if(TurnManager.instance.myTurn == false) { return; }
+        if (TurnManager.instance.myTurn == false) { return; }
 
         TargetPicker.SetActive(isShow);
 
-        if(targetPickEntity != null)
-            TargetPicker.transform.position = targetPickEntity.transform.position;
-        else if(selectTile != null && selectTile.tileState == TileState.opponentOutpost)
+        if (enermyEntityPick != null)
+            TargetPicker.transform.position = enermyEntityPick.transform.position;
+        else if (selectTile != null && selectTile.tileState == TileState.enermyOutpost)
             TargetPicker.transform.position = selectTile.transform.position;
     }
 

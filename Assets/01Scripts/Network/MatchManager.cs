@@ -30,21 +30,21 @@ public class MatchManager : MonoBehaviour
 
     public void CreateInviteLobby()
     {
-        Debug.Log("초대 게임 생성");
+        Debug.Log("Create invite lobby");
         ELobbyType newLobbyType = ELobbyType.k_ELobbyTypePublic;
         SteamLobby.instance.CreateNewLobby(newLobbyType, true); ;
     }
 
     public void CreateNewLobby()
     {
-        Debug.Log("새로운 게임을 생성 하였습니다");
+        Debug.Log("Create new lobby");
         ELobbyType newLobbyType = ELobbyType.k_ELobbyTypePublic;
         SteamLobby.instance.CreateNewLobby(newLobbyType, false);
     }
 
     public void MatchingStart()
     {
-        Debug.Log("게임 리스트를 받아오는중 ...");
+        Debug.Log("Looking for opponent ...");
         SteamLobby.instance.GetListOfLobbies(false);
     }
 
@@ -53,20 +53,18 @@ public class MatchManager : MonoBehaviour
         SteamLobby.instance.GetListOfLobbies(true);
     }
 
-    // 로비리스트 가져와서 목록 만드는 함수, 조금 수정해서 자동입장으로
-
     public void AutoJoinLobby(List<CSteamID> lobbyIDS, LobbyDataUpdate_t result, bool joinRoom)
     {
         for (int i = 0; i < lobbyIDS.Count; i++)
         {
             if (lobbyIDS[i].m_SteamID == result.m_ulSteamIDLobby)
             {
-                Debug.Log("방 인원수: " + (SteamMatchmaking.GetNumLobbyMembers((CSteamID)lobbyIDS[i].m_SteamID)).ToString() + 
+                Debug.Log("LobbyID : " + (SteamMatchmaking.GetNumLobbyMembers((CSteamID)lobbyIDS[i].m_SteamID)).ToString() +
                     " max players: " + SteamMatchmaking.GetLobbyMemberLimit((CSteamID)lobbyIDS[i].m_SteamID).ToString());
 
                 SteamLobby.instance.JoinLobby(lobbyIDS[i]);
 
-                if(joinRoom)
+                if (joinRoom)
                     LobbyUI.instance.CreateRoomButtonClick();
 
                 break;

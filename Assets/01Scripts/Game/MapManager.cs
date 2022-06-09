@@ -5,7 +5,10 @@ using Mirror;
 
 public class MapManager : MonoBehaviour
 {
-    public static MapManager instance { get; private set; }
+    public static MapManager instance
+    {
+        get; private set;
+    }
 
     void Awake() => instance = this;
 
@@ -15,7 +18,7 @@ public class MapManager : MonoBehaviour
 
     public GameObject TilePrefab;
     public GameObject ParentTile;
-    public int mapSize; // ¡ˆ±› 7∑Œ ø°µ≈Õø° ¿‘∑¬«ÿ≥˘¿Ω
+    public int mapSize;
     public float tilePrefabSizeX = 2.5f;
     public float tilePrefabSizeY = 2.5f;
 
@@ -23,8 +26,6 @@ public class MapManager : MonoBehaviour
 
     public Tile[,] mapData;
 
-    
-    
     List<List<Tile>> map = new List<List<Tile>>();
 
     public int outpostMaxCount;
@@ -35,7 +36,10 @@ public class MapManager : MonoBehaviour
     public List<Outpost> opponent_OutpostList = new List<Outpost>();
     public int livePlayerOutpost, liveOpponentOutpost;
 
-    bool isServer, isClient;
+    public bool select_tile_mode;
+    bool isServer;
+
+    Entity temp_entity;
 
 
     private void Start()
@@ -44,7 +48,6 @@ public class MapManager : MonoBehaviour
         generateMap();
         ChangeColorOutOfTile(Color.red);
         isServer = NetworkRpcFunc.instance.isServer;
-        isClient = NetworkRpcFunc.instance.isClient;
     }
 
     private void Setup()
@@ -54,16 +57,19 @@ public class MapManager : MonoBehaviour
         outpostCount = 0;
     }
 
+    public Tile GetTile(Coordinate coordinate) => mapData[coordinate.x, coordinate.y];
+
+
     void generateMap()
     {
-        Debug.Log("∏  ª˝º∫¿ª Ω√¿€«’¥œ¥Ÿ. ");
+        Debug.Log("Map is Generated. ");
         map = new List<List<Tile>>();
         for (int i = 0; i < mapSize; i++)
         {
             List<Tile> row = new List<Tile>();
             for (int j = 0; j < mapSize; j++)
             {
-                Tile tile = ((GameObject)Instantiate(TilePrefab, new Vector3((i - Mathf.Floor(mapSize / 2)) * tilePrefabSizeX + moveMap_x , (j - Mathf.Floor(mapSize / 2)) * tilePrefabSizeY + moveMap_y, -30), Quaternion.Euler(new Vector3()))).GetComponent<Tile>();
+                Tile tile = ((GameObject)Instantiate(TilePrefab, new Vector3((i - Mathf.Floor(mapSize / 2)) * tilePrefabSizeX + moveMap_x, (j - Mathf.Floor(mapSize / 2)) * tilePrefabSizeY + moveMap_y, -30), Quaternion.Euler(new Vector3()))).GetComponent<Tile>();
                 tile.name = "(" + i.ToString() + ", " + j.ToString() + ")";
                 tile.transform.parent = ParentTile.transform;
 
@@ -103,16 +109,16 @@ public class MapManager : MonoBehaviour
 
     void ChangeColorOutOfTile(Color color)
     {
-        for(int i = 0; i < mapSize; i++)
+        for (int i = 0; i < mapSize; i++)
         {
-            for(int j = mapSize; j > (mapSize / 2); j--)
+            for (int j = mapSize; j > (mapSize / 2); j--)
             {
                 mapData[i, j - 1].ChangeTileColor(color);
 
-                if(color == Color.red)
+                if (color == Color.red)
                     mapData[i, j - 1].canSelect = false;
 
-                if(color == Color.white)
+                if (color == Color.white)
                     mapData[i, j - 1].canSelect = true;
 
             }
@@ -122,6 +128,7 @@ public class MapManager : MonoBehaviour
     {
         return mapData[coordinate.x, coordinate.y];
     }
+
     public void SetupOutpost(Tile tile)
     {
         if (selectOutpostComplete)
@@ -133,7 +140,7 @@ public class MapManager : MonoBehaviour
         if (tile.tileState != TileState.empty)
             return;
 
-        Debug.Log("∞≈¡°º±≈√ ¡¬«• : " + tile.coordinate.vector3Pos);
+        Debug.Log("Seleted outpost : " + tile.coordinate.vector3Pos);
 
         outpostCount++;
 
@@ -147,13 +154,64 @@ public class MapManager : MonoBehaviour
         else
         {
             selectOutpostComplete = true;
-            foreach(var tileSet in mapData)
+            foreach (var tileSet in mapData)
             {
                 tileSet.canSelect = true;
                 tileSet.ResetColor();
             }
         }
+    }
 
+    public void MapTileInit()
+    {
+        foreach (var tile in mapData)
+        {
+            tile.ColorChange_Rock(false, Color.white);
+            tile.clickBlock = false;
+        }
+    }
+
+    public void SelectMode(Entity entity, Ability ability)
+    {
+        select_tile_mode = true;
+        GameManager.instance.Notification("Ïù¥ÎèôÌï† Ïû•ÏÜåÎ•º ÏÑ†ÌÉù ÌïòÏÑ∏Ïöî");
+        int value = 0;
+
+        foreach (var effect in ability.effects)
+        {
+            if (effect.effectClass == EffectClass.move)
+            {
+                value = effect.value;
+            }
+        }
+
+        foreach (var tile in mapData)
+        {
+            if (tile.tileState == TileState.empty)
+            {
+                if (tile.coordinate.MaxDistance(entity.coordinate, value))
+                {
+                    tile.ColorChange_Rock(true, Color.green);
+                }
+                else
+                {
+                    tile.clickBlock = true;
+                }
+            }
+        }
+        temp_entity = entity;
+    }
+    public void Select_Effect_Tile(Tile targetTile)
+    {
+        if (select_tile_mode)
+        {
+            if (targetTile.tileState == TileState.empty)
+            {
+                GameManager.instance.localGamePlayerScript.CmdMoveEffect(temp_entity.id, targetTile.coordinate.vector3Pos);
+
+                select_tile_mode = false;
+            }
+        }
     }
 
     public void SetOutpost(Coordinate coordinate, bool server)
@@ -186,7 +244,7 @@ public class MapManager : MonoBehaviour
             livePlayerOutpost = player_OutpostList.Count;
             liveOpponentOutpost = opponent_OutpostList.Count;
 
-            if(isServer)
+            if (isServer)
                 GameManager.instance.StartGame();
         }
     }
@@ -215,18 +273,31 @@ public class MapManager : MonoBehaviour
             for (int j = minY; j <= maxY; j++)
             {
                 if (isMine)
-                    mapData[i, j].canSpawn = CanSpawn.playerCanSpawn;
+                {
+                    if (mapData[i, j].canSpawn == CanSpawn.opponentCanSpawn)
+                        mapData[i, j].canSpawn = CanSpawn.all;
+
+                    else
+                        mapData[i, j].canSpawn = CanSpawn.playerCanSpawn;
+
+                }
                 else
-                    mapData[i, j].canSpawn = CanSpawn.opponentCanSpawn;
+                {
+                    if (mapData[i, j].canSpawn == CanSpawn.playerCanSpawn)
+                        mapData[i, j].canSpawn = CanSpawn.all;
+
+                    else
+                        mapData[i, j].canSpawn = CanSpawn.opponentCanSpawn;
+                }
             }
         }
     }
 
     public void OutpostDestroy(Outpost outpost, bool isMine)
     {
-        if (isMine)
+        if (outpost.belong == EntityBelong.Player)
             livePlayerOutpost--;
-        else
+        else if(outpost.belong == EntityBelong.Enermy)
             liveOpponentOutpost--;
 
         int minX = outpost.coordinate.x - 1;
@@ -259,7 +330,7 @@ public class MapManager : MonoBehaviour
         else
             opponent_OutpostList.Remove(outpost);
 
-        foreach(Outpost playerOutpost in player_OutpostList)
+        foreach (Outpost playerOutpost in player_OutpostList)
         {
             SetCanSpawnPoint(playerOutpost, true);
         }
@@ -269,4 +340,5 @@ public class MapManager : MonoBehaviour
             SetCanSpawnPoint(opponentOutpost, false);
         }
     }
+
 }

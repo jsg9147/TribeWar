@@ -9,15 +9,20 @@ public class MyNetworkManager : NetworkManager
 {
     [SerializeField] private GamePlayer gamePlayerPrefab;
     [SerializeField] public GameObject playerSlotObject;
-    [SerializeField] public int _minPlayers;
-    int minPlayers
-    {
-        get { return _minPlayers - 1; }
-        set { _minPlayers = value + 1; }
-    }
+    [SerializeField] public int minPlayers;
+    // int minPlayers
+    // {
+    //     get
+    //     {
+    //         return _minPlayers - 1;
+    //     }
+    //     set
+    //     {
+    //         _minPlayers = value + 1;
+    //     }
+    // }
     public List<GamePlayer> GamePlayers { get; } = new List<GamePlayer>();
 
-    [Header("플레이어 상태 변수")]
     public bool quickMatch = false;
 
     public void QuickMatch() => quickMatch = true;
@@ -26,16 +31,11 @@ public class MyNetworkManager : NetworkManager
     // Start is called before the first frame update
     public override void OnStartServer()
     {
-        Debug.Log("서버 연결을 시작합니다");
+        Debug.Log("Start mirror server");
     }
-    public override void OnClientConnect(NetworkConnection conn)
+    public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
-        Debug.Log("클라이언트 접속 되었습니다");
-        base.OnClientConnect(conn);
-    }
-    public override void OnServerAddPlayer(NetworkConnection conn)
-    {
-        Debug.Log("올바른 씬에 접속해 있는지 확인합니다. \n접속자의 씬 : " + SceneManager.GetActiveScene().name.ToString() + ". 올바른 씬 이름 : MainMenu");
+        Debug.Log("Player is add on server : " + SceneManager.GetActiveScene().name.ToString() + "proper scene name : MainMenu");
         if (SceneManager.GetActiveScene().name == "MainMenu")
         {
             bool isGameLeader = GamePlayers.Count == 0; // isLeader is true if the player count is 0, aka when you are the first player to be added to a server/room
@@ -50,13 +50,13 @@ public class MyNetworkManager : NetworkManager
 
             NetworkServer.AddPlayerForConnection(conn, GamePlayerInstance.gameObject);
 
-            Debug.Log(GamePlayerInstance.playerName + "님이 접속했습니다. " + " 접속 아이디: " + GamePlayerInstance.ConnectionId.ToString() + "\n현재 접속자 수 : " + GamePlayers.Count);
+            Debug.Log(GamePlayerInstance.playerName + " is connected. " + " player connection ID : " + GamePlayerInstance.ConnectionId.ToString() + "\nCorrent player count : " + GamePlayers.Count);
             if (quickMatch)
             {
                 if (GamePlayers.Count == minPlayers)
                 {
-                    UIManager.instanse.MatchingSuccess();
-                    Debug.Log("게임을 시작 합니다");
+
+                    Debug.Log("Let's start the game");
                     StartGame();
                 }
             }
@@ -71,14 +71,11 @@ public class MyNetworkManager : NetworkManager
 
     public void PlayerAllLoading()
     {
-        // 무한로딩 가능성 있음, false 일때 대처 필요
         if (CanStartGame())
         {
-            // 방장이 맵 로딩 완료되면 작동.
             StartCoroutine(GameManager.instance.LoadingComplite());
-
-            // 방장 아닌 컴퓨터들이 로딩 완료되면 동작
-            NetworkRpcFunc.instance?.RpcLoadingComplite();
+            if (NetworkRpcFunc.instance != null)
+                NetworkRpcFunc.instance.RpcLoadingComplite();
         }
     }
 
@@ -97,25 +94,25 @@ public class MyNetworkManager : NetworkManager
     }
 
 
-    [ContextMenu ("Start Game")]
+    [ContextMenu("Start Game")]
     public void StartGame()
     {
+        LobbyUI.instance.MatchSuccess();
         StartCoroutine(GameStart());
     }
 
     IEnumerator GameStart()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1f);
         if (SceneManager.GetActiveScene().name == "MainMenu")
         {
             ServerChangeScene("Scene_GamePlay");
         }
     }
 
-    // 로딩 여부 확인하는것... 
     private bool CanStartGame()
     {
-        print("로딩 확인중");
+        print("Check player loading state");
 
         if (numPlayers < minPlayers)
             return false;
@@ -152,13 +149,13 @@ public class MyNetworkManager : NetworkManager
         }
     }
 
-    public override void OnServerDisconnect(NetworkConnection conn)
+    public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
         if (conn.identity != null)
         {
             GamePlayer player = conn.identity.GetComponent<GamePlayer>();
 
-            if(player.playerSteamId != SteamUser.GetSteamID().m_SteamID)
+            if (player.playerSteamId != SteamUser.GetSteamID().m_SteamID)
             {
                 if (GameManager.instance != null)
                     GameManager.instance.GameResult(true);

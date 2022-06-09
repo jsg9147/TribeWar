@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 나중엔 이거 파일로 저장되게 해야함
 public class PlayLogControl : MonoBehaviour
 {
     public static PlayLogControl instance;
@@ -13,7 +12,6 @@ public class PlayLogControl : MonoBehaviour
 
     public GameObject logContent;
 
-    [Header("옛날 변수")]
     public GameObject battleLogLayout;
     public GameObject singleLog;
     public GameObject effectLog;
@@ -23,7 +21,6 @@ public class PlayLogControl : MonoBehaviour
 
     public Button bottomButton;
 
-    // 단일 효과 or 몬스터카드 소환에 쓰이는 로그
     private void Awake()
     {
         instance = this;
@@ -57,7 +54,7 @@ public class PlayLogControl : MonoBehaviour
                 playLog.Effected_Log(fieldCard);
                 break;
             case LogCategory.Sacrifice:
-                playLog.Monster_Log(fieldCard, "제물");
+                playLog.Monster_Log(fieldCard, "");
                 break;
         }
         Add_Log(playLog);
@@ -72,7 +69,7 @@ public class PlayLogControl : MonoBehaviour
                 playLog.Magic_Log(card);
                 break;
             case LogCategory.Drop:
-                playLog.Magic_Log(card, "패에서 버림");
+                playLog.Magic_Log(card, "留덈쾿 諛쒕룞");
                 break;
         }
         Add_Log(playLog);
@@ -87,7 +84,7 @@ public class PlayLogControl : MonoBehaviour
                 playLog.Monster_Battle_Log(card, beforeBP, afterBP);
                 break;
             case LogCategory.Defend:
-                playLog.Monster_Battle_Log(card, beforeBP, afterBP, "피격");
+                playLog.Monster_Battle_Log(card, beforeBP, afterBP, "");
                 break;
         }
 

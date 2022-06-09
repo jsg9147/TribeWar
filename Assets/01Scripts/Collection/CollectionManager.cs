@@ -27,7 +27,7 @@ public class CollectionManager : MonoBehaviour
 
     private void Start()
     {
-        Button_Event_AddListener();
+        //Button_Event_AddListener();
     }
 
     void Button_Event_AddListener()
@@ -65,16 +65,16 @@ public class CollectionManager : MonoBehaviour
         {
             int collectionCount = WebMain.instance.web.userItems[card_id];
 
-            foreach(var myCardID in deckEditorManager.myEditDeck.cardCount.Keys)
+            foreach (var myCardID in deckEditorManager.myEditDeck.cardCount.Keys)
             {
-                if(myCardID == card_id)
+                if (myCardID == card_id)
                 {
                     collectionCount = collectionCount - deckEditorManager.myEditDeck.cardCount[card_id];
                     break;
                 }
             }
 
-            if(collectionCount != 0)
+            if (collectionCount != 0)
             {
                 Card card = CardDatabase.instance.CardData(card_id);
                 GameObject cardObj = Instantiate(collectionCardPrefab, editorCollectionContent.transform);
@@ -118,8 +118,8 @@ public class CollectionManager : MonoBehaviour
         switch (value)
         {
             case 0:
-                var orderByID = collectionList.OrderBy(x => x.GetComponent<EnlargeCardUI>().card.card_code);
-                foreach(var card in orderByID)
+                var orderByID = collectionList.OrderBy(x => x.GetComponent<EnlargeCardUI>().card.id);
+                foreach (var card in orderByID)
                 {
                     card.transform.SetAsLastSibling();
                 }
@@ -174,7 +174,7 @@ public class CollectionManager : MonoBehaviour
     {
         foreach (var card in collectionList)
         {
-            if(card.GetComponent<EnlargeCardUI>().card.name.Contains(search))
+            if (card.GetComponent<EnlargeCardUI>().card.name.Contains(search))
             {
                 card.SetActive(true);
             }
@@ -191,15 +191,16 @@ public class CollectionManager : MonoBehaviour
         SortByCardCollection(0);
     }
 
-    public void Add_Excluded_Card(Card card)
-    {
-        GameObject cardObject = Instantiate(collectionCardPrefab, editorCollectionContent.transform);
-        enlargeCardUI.Setup(card, true);
-        collectionList.Add(cardObject);
-    }
+    //
+    //public void Add_Excluded_Card(Card card)
+    //{
+    //    GameObject cardObject = Instantiate(collectionCardPrefab, editorCollectionContent.transform);
+    //    enlargeCardUI.Setup(card, true);
+    //    collectionList.Add(cardObject);
+    //}
 
-    public void Remove_CollectionCard_In_CollectionList(EditCardEvent collectionCard)
-    {
-        collectionList.Remove(collectionCard.gameObject);
-    }
+    //public void Remove_CollectionCard_In_CollectionList(EditCardEvent collectionCard)
+    //{
+    //    collectionList.Remove(collectionCard.gameObject);
+    //}
 }

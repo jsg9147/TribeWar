@@ -13,7 +13,7 @@ public class PlayLog : MonoBehaviour
 
 
 
-    public void Monster_Log(Entity fieldCard, string infoStr = "¼ÒÈ¯!")
+    public void Monster_Log(Entity fieldCard, string infoStr = "ì†Œí™˜!")
     {
         nameTMP.text = fieldCard.card.name;
         cardImage.sprite = fieldCard.card.sprite;
@@ -26,10 +26,10 @@ public class PlayLog : MonoBehaviour
         nameTMP.text = fieldCard.card.name;
         cardImage.sprite = fieldCard.card.sprite;
         coordinateTMP.text = "(" + before_Coord.x + ", " + before_Coord.y + ")";
-        effectTMP.text = "ÀÌµ¿ (" + fieldCard.coordinate.x + ", " + fieldCard.coordinate.y + ")";
+        effectTMP.text = "ì´ë™ (" + fieldCard.coordinate.x + ", " + fieldCard.coordinate.y + ")";
     }
 
-    public void Magic_Log(Card card, string infoStr = "È¿°ú ¹ßµ¿!")
+    public void Magic_Log(Card card, string infoStr = "ë§ˆë²•ì¹´ë“œ ë°œë™!")
     {
         nameTMP.text = card.name;
         cardImage.sprite = card.sprite;
@@ -37,7 +37,7 @@ public class PlayLog : MonoBehaviour
         coordinateTMP.text = "";
     }
 
-    public void Effected_Log(Entity fieldCard, string infoStr = "È¿°ú Àû¿ë")
+    public void Effected_Log(Entity fieldCard, string infoStr = "íš¨ê³¼ ë°œë™")
     {
         nameTMP.text = fieldCard.card.name;
         cardImage.sprite = fieldCard.card.sprite;
@@ -45,15 +45,15 @@ public class PlayLog : MonoBehaviour
         coordinateTMP.text = "(" + fieldCard.coordinate.x + ", " + fieldCard.coordinate.y + ")";
     }
 
-    public void Monster_Battle_Log(Entity card, int beforeBP, int afterBP, string effectStr = "°ø°İ")
+    public void Monster_Battle_Log(Entity card, int beforeBP, int afterBP, string effectStr = "ì „íˆ¬")
     {
         nameTMP.text = card.card.name;
         cardImage.sprite = card.card.sprite;
         coordinateTMP.text = "(" + card.coordinate.x + ", " + card.coordinate.y + ")";
         if (afterBP == 0)
-            effectTMP.text = effectStr + " " + beforeBP + "¡æ ÆÄ±«!";
+            effectTMP.text = effectStr + " " + beforeBP + "íŒŒê´´!";
         else
-            effectTMP.text = effectStr + " " + beforeBP + "¡æ" + afterBP;
+            effectTMP.text = effectStr + " " + beforeBP + "ë°ë¯¸ì§€ " + afterBP;
     }
 
     public void Outpost_Attack_Log(Entity fieldCard)
@@ -61,15 +61,14 @@ public class PlayLog : MonoBehaviour
         nameTMP.text = fieldCard.card.name;
         cardImage.sprite = fieldCard.card.sprite;
         coordinateTMP.text = "(" + fieldCard.coordinate.x + ", " + fieldCard.coordinate.y + ")";
-        effectTMP.text = "°ÅÁ¡ °ø°İ! (" + fieldCard.card.GetEffectiveValue("BP") + ")";
+        effectTMP.text = "ê±°ì  ê³µê²©! (" + fieldCard.card.GetEffectiveValue("bp") + ")";
     }
 
     public void Outpost_Damaged_Log(Outpost outpost, Entity fieldCard)
     {
-        // °ÅÁ¡ ÀÌ¹ÌÁö Á¤Âø ½ÃÄÑ¾ßÇÔ
         nameTMP.text = fieldCard.card.name;
         cardImage.sprite = fieldCard.card.sprite;
         coordinateTMP.text = "(" + outpost.coordinate.x + ", " + outpost.coordinate.y + ")";
-        effectTMP.text = "ÇÇ°İ! (" + (outpost.life + fieldCard.GetEffectiveValue("BP")) + "¡æ" + outpost.life + ")";
+        effectTMP.text = "ë­ì§€! (" + (outpost.life + fieldCard.GetEffectiveValue("bp")) + "ê¸°ì–µì•ˆë‚˜" + outpost.life + ")";
     }
 }

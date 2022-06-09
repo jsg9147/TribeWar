@@ -7,15 +7,17 @@ public class NetworkRpcFunc : NetworkBehaviour
 {
     public static NetworkRpcFunc instance;
 
+    public GameManager gameManager;
+    public EntityManager entityManager;
+    public CardManager cardManager;
+    public MapManager mapManager;
+    public EffectManager effectManager;
+
     private void Awake()
     {
         instance = this;
     }
 
-    private void Start()
-    {
-        
-    }
 
     #region Entity Manager
     [ClientRpc]
@@ -26,27 +28,26 @@ public class NetworkRpcFunc : NetworkBehaviour
 
     [ClientRpc]
     public void RpcOutpostAttack(int attackerID, Coordinate outpostCoord, bool server) => EntityManager.instance?.OutpostAttack(attackerID, outpostCoord, server);
-    [ClientRpc]
-    public void RpcSetCoordinateData(Vector3 coordVec) => EntityManager.instance?.SetCoordinateData(coordVec);
+    //[ClientRpc]
+    //public void RpcSetCoordinateData(Vector3 coordVec) => EntityManager.instance?.SetCoordinateData(coordVec);
+
+    //[ClientRpc]
+    //public void RpcSummon(bool server, string card_id, Coordinate coordinate) => EntityManager.instance?.Summon(server, card_id, coordinate);
 
     [ClientRpc]
-    public void RpcSummon(bool server, string card_id, Coordinate coordinate) => EntityManager.instance?.Summon(server, card_id, coordinate);
+    public void RpcSelectTribute(bool server, int entityID) => EntityManager.instance?.SelectMonster(server, entityID);
 
     [ClientRpc]
-    public void RpcSelectTribute(bool server, int entityID) => EntityManager.instance?.SelectTribute(server, entityID);
+    public void RpcEffectSolve(string card_id, bool server) => effectManager.EffectSolve(card_id, server);
 
     [ClientRpc]
-    public void RpcEffectSolve(string card_id, bool server) => EntityManager.instance?.EffectSolve(card_id, server);
+    public void RpcSelect_Effect_Target(int entityID, bool targetPlayer, bool server) => effectManager.Select_Target(entityID, targetPlayer, server);
+
+   [ClientRpc]
+    public void RpcRandomTargetEffect(int entity_id, string card_id) => EntityManager.instance?.RandomTargetEffect(entity_id, card_id);
 
     [ClientRpc]
-    public void RpcSelect_Effect_Target(int entityID, bool targetPlayer, bool server) => EntityManager.instance?.Select_Effect_Target(entityID, targetPlayer, server);
-
-    [ClientRpc]
-    public void RpcOpponentTargetEffect(int entityID, string card_id, bool server) => EntityManager.instance?.OpponentTargetEffect(entityID, card_id, server);
-    [ClientRpc]
-    public void RpcPlayerTargetEffect(int entityID, string card_id, bool server) => EntityManager.instance?.PlayerTargetEffect(entityID, card_id, server);
-    [ClientRpc]
-    public void RpcRandomTargetEffect(bool targetPlayer, int entityIndex, string card_id, bool server) => EntityManager.instance?.RandomTargetEffect(targetPlayer, entityIndex, card_id, server);
+    public void RpcTarget_Effect_Solver(int entityID, Vector3 tilePos) => EntityManager.instance?.Target_Effect_Solver(entityID, tilePos);
 
     #endregion
 

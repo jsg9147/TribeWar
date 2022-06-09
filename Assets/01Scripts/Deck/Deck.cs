@@ -17,7 +17,7 @@ public class Deck
     public IndexInfo IndexInfo;
 
     public int index;
-    public string title;
+    public string name;
     public Dictionary<string, int> cardCount = new Dictionary<string, int>();
     public Card representCard = null;
     public List<string> cardIDs = new List<string>();
@@ -34,18 +34,18 @@ public class Deck
 
     public void SetCard(Card card, int count = 1)
     {
-        cardCount.Add(card.card_code, count);
-        cardIDs.Add(card.card_code);
+        cardCount.Add(card.id, count);
+        cardIDs.Add(card.id);
     }
 
     public void DeckPaste(Deck deck)
     {
-        this.title = deck.title;
+        this.name = deck.name;
         this.index = deck.index;
         this.cardCount = deck.cardCount;
         this.representCard = deck.representCard;
 
-        foreach(string id in cardCount.Keys)
+        foreach (string id in cardCount.Keys)
         {
             cardIDs.Add(id);
         }
@@ -55,5 +55,19 @@ public class Deck
     {
         cardCount.Clear();
         cardIDs.Clear();
+    }
+
+    public void Random_Represent_Card()
+    {
+        List<string> card_ids = new List<string>();
+
+        foreach (var card_id in cardCount.Keys)
+        {
+            card_ids.Add(card_id);
+        }
+
+        int randNum = Random.Range(0, card_ids.Count);
+
+        representCard = CardDatabase.instance.CardData(card_ids[randNum]);
     }
 }

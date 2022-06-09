@@ -23,10 +23,9 @@ public class DeckEditor : MonoBehaviour
     public GameObject collectCardPrefab;
     public GameObject cardPrefab;
 
-    [Header("그 밖")]
     public Button addDeckButton;
     public Deck myEditDeck;
-    
+
     List<CollectionCard> collectionList;
 
     List<Card> myDeckCards;
@@ -39,13 +38,13 @@ public class DeckEditor : MonoBehaviour
 
     private void Start()
     {
-        //addDeckButton.onClick.AddListener(() =>
-        //{
-        //    ClearCardOfDeck();
-        //    init();
-        //    Give_Index_of_New_Deck();
-        //    SetCardOfDeck(myEditDeck.index);
-        //});
+        addDeckButton.onClick.AddListener(() =>
+        {
+            Deck_Clear();
+            Give_Index_of_New_Deck();
+            Card_List_Clear();
+            LobbyUI.instance.SelectEditMyDeck(myEditDeck);
+        });
 
         searchField.onValueChanged.AddListener((string search) =>
         {
@@ -60,7 +59,6 @@ public class DeckEditor : MonoBehaviour
         deckTitleName_Input.text = "";
     }
 
-    // 새 덱 인덱스부여, 기존덱 번호 사라지면 당겨지는거 만들어야 하는지 확인 필요
     void Give_Index_of_New_Deck()
     {
         var myDeckList = WebMain.instance.web.myDeckList;
@@ -74,6 +72,7 @@ public class DeckEditor : MonoBehaviour
             }
         }
     }
+
     public void Input_Title(string title_Text)
     {
         if (title_Text == "")
@@ -84,13 +83,12 @@ public class DeckEditor : MonoBehaviour
 
     public void Edit_Deck_Setup(Deck _deck)
     {
-        UIManager.instanse.DeckEditorWindowOn();
         myEditCards = new Dictionary<string, int>(WebMain.instance.web.userItems);
         collectionList = new List<CollectionCard>();
         Destroy_Card_Object_Of_Deck();
 
         myEditDeck = _deck.CloneDeck();
-        deckTitleName_Input.text = myEditDeck.title;
+        deckTitleName_Input.text = myEditDeck.name;
 
         Create_EditWindow_CollectCard();
 
@@ -102,7 +100,7 @@ public class DeckEditor : MonoBehaviour
                 {
                     Card card = CardDatabase.instance.CardData(card_id);
                     var editCard = Instantiate(cardPrefab, myDeckCardContent.transform);
-                    editCard.GetComponent<CardUI>().Setup(card, true, Belong.Deck);
+                    editCard.GetComponent<CardUI>().Setup(card, true);
                     myDeckCards.Add(card);
                 }
                 myEditCards[card_id] = myEditCards[card_id] - myEditDeck.cardCount[card_id];
@@ -112,7 +110,7 @@ public class DeckEditor : MonoBehaviour
     }
 
     void Create_EditWindow_CollectCard()
-    {   
+    {
         ClearCollectCard_Window(edit_CollectCard_Content);
         foreach (var card_id in WebMain.instance.web.userItems.Keys)
         {
@@ -155,13 +153,14 @@ public class DeckEditor : MonoBehaviour
     {
         Card card = cardUI.card;
 
-        myEditDeck.cardCount[card.card_code] -= 1;
-        if (myEditDeck.cardCount[card.card_code] < 0)
+        myEditDeck.cardCount[card.id] -= 1;
+        if (myEditDeck.cardCount[card.id] < 0)
         {
-            myEditDeck.cardCount[card.card_code] = 0;
+            myEditDeck.cardCount[card.id] = 0;
         }
 
-        CollectionCard editCard = collectionList.Find(x => x.card.card_code == cardUI.card.card_code);
+        CollectionCard editCard = collectionList.Find(x => x.card.id == cardUI.card.id);
+
         if (editCard != null)
         {
             editCard.CardCountPlus();
@@ -173,7 +172,7 @@ public class DeckEditor : MonoBehaviour
             collectionList.Add(cardObj.GetComponent<CollectionCard>());
             edit_CollectCard_Content.GetComponent<FlexibleGrid>().SetFlexibleGrid();
         }
-        myEditCards[card.card_code]++;
+        myEditCards[card.id]++;
         myDeckCards.Remove(card);
 
         DestroyImmediate(cardUI.gameObject);
@@ -184,7 +183,6 @@ public class DeckEditor : MonoBehaviour
         enlargeCardUI.Setup(card);
     }
 
-    // 덱 초기화
     public void Destroy_Card_Object_Of_Deck()
     {
         init();
@@ -200,7 +198,8 @@ public class DeckEditor : MonoBehaviour
 
         foreach (GameObject child in allChildren)
         {
-            DestroyImmediate(child.gameObject);
+            if (child.GetComponent<Button>() == null)
+                DestroyImmediate(child.gameObject);
         }
     }
 
@@ -213,12 +212,12 @@ public class DeckEditor : MonoBehaviour
     public void Card_Add_In_My_EditDeck(CollectionCard collectionCard)
     {
         Card card = collectionCard.card;
-        if(myEditDeck.cardIDs.Find(x => x == card.card_code) != null)
+        if (myEditDeck.cardIDs.Find(x => x == card.id) != null)
         {
-            if (myEditDeck.cardCount[card.card_code] >= card_Limit_Count)
+            if (myEditDeck.cardCount[card.id] >= card_Limit_Count)
                 return;
 
-            myEditDeck.cardCount[card.card_code]++;
+            myEditDeck.cardCount[card.id]++;
 
         }
         else
@@ -226,21 +225,27 @@ public class DeckEditor : MonoBehaviour
             myEditDeck.SetCard(card);
         }
 
-        myEditCards[card.card_code]--;
+        myEditCards[card.id]--;
         collectionCard.CardCountMinus();
 
-        if (myEditCards[card.card_code] <= 0)
+        if (myEditCards[card.id] <= 0)
         {
             collectionList.Remove(collectionCard);
-            myEditCards[card.card_code] = 0;
+            myEditCards[card.id] = 0;
             Destroy(collectionCard.gameObject);
         }
 
         var editCard = Instantiate(cardPrefab, myDeckCardContent.transform);
-        editCard.GetComponent<CardUI>().Setup(card,true ,Belong.Deck);
+        editCard.GetComponent<CardUI>().Setup(card, true);
         myDeckCards.Add(card);
 
         myDeckCardContent.GetComponent<FlexibleGrid>().SetFlexibleGrid();
+    }
+
+    public void Set_Represent_Card()
+    {
+        Card card = enlargeCardUI.card;
+        myEditDeck.representCard = card;
     }
 
     public void Edit_Deck_Save()
@@ -248,32 +253,31 @@ public class DeckEditor : MonoBehaviour
         if (saveDeckButton.interactable == false)
             return;
 
-        foreach (var cardID in myEditDeck.cardCount.Keys)
+        if (myEditDeck.representCard == null)
         {
-            StartCoroutine(WebMain.instance.web.UpdateDeckInfo(myEditDeck.index, myEditDeck.cardCount[cardID].ToString(), cardID.ToString()));
+            myEditDeck.Random_Represent_Card();
         }
 
-        StartCoroutine(WebMain.instance.web.UpdateMyDeckTitleName(myEditDeck.index, deckTitleName_Input.text));
+        myEditDeck.name = deckTitleName_Input.text;
+        StartCoroutine(WebMain.instance.web.Save_Edit_Deck(myEditDeck));
 
         if (WebMain.instance.web.myDeckList.Exists(x => x.index == myEditDeck.index))
         {
             Deck editDeck = WebMain.instance.web.myDeckList.Find(x => x.index == myEditDeck.index);
             editDeck.DeckPaste(myEditDeck);
-            editDeck.title = deckTitleName_Input.text;
+            editDeck.name = deckTitleName_Input.text;
         }
         else
         {
             WebMain.instance.web.myDeckList.Add(myEditDeck);
         }
         deckTitleName_Input.text = "";
-
-        UIManager.instanse.DeckManagerWindowOn();
+        Deck_Clear();
     }
 
-    #region 카드 서치 관련
     void CardSearch(string search)
     {
-        foreach (var collectionCard  in collectionList)
+        foreach (var collectionCard in collectionList)
         {
             if (collectionCard.card.name.Contains(search))
             {
@@ -285,5 +289,27 @@ public class DeckEditor : MonoBehaviour
             }
         }
     }
-    #endregion
+
+    public void Card_List_Clear()
+    {
+        init();
+        Give_Index_of_New_Deck();
+        foreach (Transform child in myDeckCardContent.transform)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
+    public void Deck_Clear_Button()
+    {
+        int index = myEditDeck.index;
+        init();
+        Give_Index_of_New_Deck();
+
+        myEditDeck.index = index;
+        foreach (Transform child in myDeckCardContent.transform)
+        {
+            Destroy(child.gameObject);
+        }
+    }
 }

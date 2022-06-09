@@ -8,13 +8,13 @@ public class CardType
     public static int currentId;
     public MoveType moveType;
     public CardCategory card_category;
-    public CardRole role;
+    public AttackType attack_type;
     public Tribe tribe;
     public Sprite typeIcon;
 
     public void SetCardCategory(string categoryStr)
     {
-        switch(categoryStr)
+        switch (categoryStr)
         {
             case "monster":
                 this.card_category = CardCategory.Monster;
@@ -35,10 +35,10 @@ public class CardType
         switch (roleStr)
         {
             case "melee":
-                this.role = CardRole.melee;
+                this.attack_type = AttackType.melee;
                 break;
             case "shooter":
-                this.role = CardRole.shooter;
+                this.attack_type = AttackType.shooter;
                 break;
 
             default:
@@ -86,9 +86,9 @@ public class CardType
     public void SetCardType(JSONNode cardData)
     {
         SetMove(cardData["move"]);
-        SetCardCategory(cardData["category"]);
         SetTribe(cardData["tribe"]);
-        SetRole(cardData["role"]);
+        SetCardCategory(cardData["category"]);
+        SetRole(cardData["type"]);
 
         if (card_category == CardCategory.Magic)
             typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/magic") as Sprite;

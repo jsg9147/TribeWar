@@ -7,23 +7,23 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager instance { get; private set; }
+    public static GameManager instance
+    {
+        get; private set;
+    }
 
-    [Header("판넬 관리")]
     [SerializeField] GameObject LoadingPanel;
     [SerializeField] NotificationPanel notificationPanel;
-    [SerializeField] ConfirmationPanel confirmationPanel;
+
     [SerializeField] ResultPanel resultPanel;
     [SerializeField] GameObject endTurnBtn;
 
-    [Header("메뉴창 관리")]
     [SerializeField] GameObject menuPanel;
     [SerializeField] GameObject menuWindow;
     [SerializeField] GameObject optionWindow;
 
     [SerializeField] CameraEffect cameraEffect;
 
-    [Header("P2P용 오브젝트 and 스크립트")]
     public GameObject localGamePlayerObject;
     public GamePlayer localGamePlayerScript;
 
@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
 
     bool gameEnded;
     public bool clickBlock;
+    public bool isTutorial;
 
     private void Awake()
     {
@@ -40,7 +41,7 @@ public class GameManager : MonoBehaviour
     }
 
     private void Start()
-    {   
+    {
         FindLocalGamePlayer();
         gameEnded = false;
     }
@@ -111,11 +112,9 @@ public class GameManager : MonoBehaviour
         localGamePlayerScript.CmdTurnSetup();
     }
 
-
+    public void EndTurnBtnSetup(bool isActive) => endTurnBtn.transform.GetComponent<EndTurnBtn>().Setup(isActive);
     public void Notification(string msg) => notificationPanel.Show(msg);
-    public void Confirmation(string msg) => confirmationPanel.Show(msg);
-    public void DisapearConfirmation() => confirmationPanel.ScaleZero();
-    
+
     public void GameResult(bool gameResult, bool server)
     {
         bool isMine = NetworkRpcFunc.instance.isServer == server;
@@ -131,7 +130,7 @@ public class GameManager : MonoBehaviour
 
     public void GameResult(bool gameResult)
     {
-        if(NetworkRpcFunc.instance.isClient)
+        if (NetworkRpcFunc.instance.isClient)
             localGamePlayerScript.CmdGameResult(gameResult, NetworkRpcFunc.instance.isServer);
         if (NetworkRpcFunc.instance.isServer)
             NetworkRpcFunc.instance.RpcGameResult(gameResult, NetworkRpcFunc.instance.isServer);
@@ -194,7 +193,7 @@ public class GameManager : MonoBehaviour
         {
             menuPanel.SetActive(!menuPanel.activeSelf);
 
-            if(menuPanel.activeSelf)
+            if (menuPanel.activeSelf)
             {
                 optionWindow.SetActive(false);
                 menuWindow.SetActive(true);
@@ -202,7 +201,7 @@ public class GameManager : MonoBehaviour
 
             clickBlock = menuPanel.activeSelf;
 
-            foreach(var tile in MapManager.instance.mapData)
+            foreach (var tile in MapManager.instance.mapData)
             {
                 tile.ResetColor();
             }

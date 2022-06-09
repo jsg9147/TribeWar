@@ -8,9 +8,12 @@ using DG.Tweening;
 
 public class Entity : MonoBehaviour
 {
+    private const int PERMANENT = 0;
+
     [SerializeField] SpriteRenderer feildCardFrame;
     [SerializeField] SpriteRenderer cardSprite;
     [SerializeField] TMP_Text BattlePower_TMP;
+    [SerializeField] SpriteRenderer arrow;
 
     public Sprite bishopFrame;
     public Sprite rookFrame;
@@ -19,10 +22,13 @@ public class Entity : MonoBehaviour
     public Card card;
     public Tile bottomTile
     {
-        get { return MapManager.instance.mapData[coordinate.x, coordinate.y]; }
-        set {; }
+        get
+        {
+            return MapManager.instance.mapData[coordinate.x, coordinate.y];
+        }
     }
 
+    public EntityBelong belong = EntityBelong.None;
     public bool isMine;
     public bool isDie;
 
@@ -30,8 +36,14 @@ public class Entity : MonoBehaviour
 
     public Vector3 transformPos
     {
-        get { return transform.position; }
-        set { MoveTransform(value, true, 0.5f); }
+        get
+        {
+            return transform.position;
+        }
+        set
+        {
+            MoveTransform(value, true, 0.5f);
+        }
     }
 
     public int id;
@@ -42,46 +54,51 @@ public class Entity : MonoBehaviour
     public int moveCount;
     public bool canTribute;
 
+    List<Effect> timeEffects = new List<Effect>();
+
     int battlePower;
 
-    public void Setup(Card card)
+    Color originColor;
+    Color textColor;
+
+    public void Setup(Card card, bool _isMine)
     {
+        this.isMine = _isMine;
         coordinate = new Coordinate();
 
-        if(card.cardType.card_category == CardCategory.Monster)
+
+        if (card.cardType.card_category == CardCategory.Monster)
         {
-            battlePower = card.GetBaseStat("BP");
+            battlePower = card.GetBaseStat("bp");
         }
 
-        switch (card.cardType.moveType)
+        if (isMine)
         {
-            case MoveType.Rook:
-                feildCardFrame.sprite = rookFrame;
-                break;
-            case MoveType.Bishop:
-                feildCardFrame.sprite = bishopFrame;
-                break;
-            case MoveType.Queen:
-                feildCardFrame.sprite = queenFrame;
-                break;
-
-            default:
-                feildCardFrame.sprite = queenFrame;
-                break;
+            originColor = new Color(0, 146, 255);
+            belong = EntityBelong.Player;
+        }
+        else
+        {
+            originColor = new Color(200, 40, 40);
+            belong = EntityBelong.Enermy;
         }
 
         this.card = card;
         cardSprite.sprite = this.card.sprite;
-        BattlePower_TMP.text = battlePower.ToString();
         moveCount = 0;
         liveCount = 0;
         canTribute = true;
 
+        BattlePower_TMP.text = battlePower.ToString();
+        ColorUtility.TryParseHtmlString("#00B8FF", out textColor);
+
         if (isMine == false)
         {
             cardSprite.transform.rotation = Quaternion.Euler(0, 0, 180);
-            BattlePower_TMP.alignment = TextAlignmentOptions.MidlineRight;
+            ColorUtility.TryParseHtmlString("#FF0007", out textColor);
         }
+        BattlePower_TMP.color = textColor;
+        feildCardFrame.color = originColor;
     }
 
     #region Mouse activate
@@ -95,7 +112,7 @@ public class Entity : MonoBehaviour
 
         EntityManager.instance.EntityMouseOver(this);
 
-        if(Input.GetKeyDown(KeyCode.Mouse1))
+        if (Input.GetKeyDown(KeyCode.Mouse1))
             EnlargeCardManager.instance.Setup(card, true);
     }
     private void OnMouseExit()
@@ -103,7 +120,7 @@ public class Entity : MonoBehaviour
         if (GameManager.instance?.clickBlock ?? true)
             return;
 
-        feildCardFrame.color = new Color(1f, 1f, 1f);
+        feildCardFrame.color = originColor;
     }
 
     private void OnMouseDown()
@@ -137,7 +154,7 @@ public class Entity : MonoBehaviour
         Modifier modifier = new Modifier(-damage);
         card.Add_Modifier(modifier);
         UpdateStat();
-        
+
     }
 
     public void MoveTransform(Vector3 pos, bool useDotween, float dotweenTime = 0)
@@ -157,7 +174,7 @@ public class Entity : MonoBehaviour
 
     private void OnDestroy()
     {
-        TurnManager.OnTurnStarted -= OnTurnStarted;        
+        TurnManager.OnTurnStarted -= OnTurnStarted;
     }
 
     void OnTurnStarted(bool myTurn)
@@ -167,15 +184,33 @@ public class Entity : MonoBehaviour
 
         card.onTurnEnd();
 
+        TurnEffect_Resolve();
+
         UpdateStat();
+    }
+
+    void TurnEffect_Resolve()
+    {
+        foreach (var effect in timeEffects)
+        {
+            if (effect.duration != PERMANENT)
+            {
+                effect.duration--;
+
+                if (effect.duration <= 0)
+                {
+                    effect.Reverse(this);
+                }
+            }
+        }
     }
 
     public void UpdateStat()
     {
         if (card.name != null && card.cardType.card_category == CardCategory.Monster)
         {
-            BattlePower_TMP.text = card.GetEffectiveValue("BP").ToString();
-            if (card.GetEffectiveValue("BP") <= 0)
+            BattlePower_TMP.text = card.GetEffectiveValue("bp").ToString();
+            if (card.GetEffectiveValue("bp") <= 0)
             {
                 isDie = true;
             }
@@ -187,18 +222,18 @@ public class Entity : MonoBehaviour
         return card.GetEffectiveValue(stat);
     }
 
-    public void OppenentFeildCardColor(Color color)
-    {
-        feildCardFrame.color = color;
-    }
-
-    public void SetGraveAfterFirst()
-    {
-        this.transform.localScale = Vector3.zero;
-    }
-
     public void Add_Apply_Effect(Ability ability)
     {
-        ability.effect.Resolve(this);
+        foreach (var effect in ability.effects)
+        {
+            effect.Resolve(this);
+        }
+    }
+
+    public void ClickMark(bool isActive)
+    {
+        arrow.gameObject.SetActive(isActive);
+        arrow.transform.DOKill();
+        arrow.DOFade(0, 1).SetEase(Ease.InSine).SetLoops(-1, LoopType.Restart);
     }
 }

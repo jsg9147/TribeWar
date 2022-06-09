@@ -18,19 +18,18 @@ public class MyDeckRepresentCard : MonoBehaviour
     [SerializeField] TMP_Text card_text;
     [SerializeField] TMP_Text stat_text;
 
-    [SerializeField] List<GameObject> costImageObject;
     Card card;
 
     public void Card_Setup(Card representCard)
     {
         this.card = representCard;
-        
+
         name_text.text = card.name;
         card_Image.sprite = card.sprite;
 
         if (card.cardType.card_category == CardCategory.Monster)
         {
-            stat_text.text = "ÀüÅõ·Â : " + card.GetBaseStat("BP").ToString();
+            stat_text.text = "ì „íˆ¬ë ¥ : " + card.GetBaseStat("bp").ToString();
 
             if (card.cardType.moveType == MoveType.Rook)
                 card_Frame.sprite = RookFrame;
@@ -38,18 +37,12 @@ public class MyDeckRepresentCard : MonoBehaviour
                 card_Frame.sprite = BishopFrame;
             else if (card.cardType.moveType == MoveType.Queen)
                 card_Frame.sprite = QueenFrame;
-            
+
         }
         if (card_Icon != null)
             card_Icon.sprite = card.cardType.typeIcon;
         if (card_text != null)
             card_text.text = card.card_text.ToString();
-
-        for (int i = 0; i < card.cost; i++)
-        {
-            costImageObject[i].SetActive(true);
-        }
-
 
     }
 }

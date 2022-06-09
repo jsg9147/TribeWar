@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MyDeckScreen : MonoBehaviour
 {
@@ -21,7 +22,8 @@ public class MyDeckScreen : MonoBehaviour
     {
         foreach (Transform child in myDeckContent.transform)
         {
-            Destroy(child.gameObject);
+            if (child.name != "Add Deck Button")
+                Destroy(child.gameObject);
         }
     }
 }

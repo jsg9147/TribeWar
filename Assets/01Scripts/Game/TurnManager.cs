@@ -7,7 +7,10 @@ using Random = UnityEngine.Random;
 
 public class TurnManager : MonoBehaviour
 {
-    public static TurnManager instance { get; private set; }
+    public static TurnManager instance
+    {
+        get; private set;
+    }
     public static Action<bool> OnAddCard;
     public static event Action<bool> OnTurnStarted;
 
@@ -37,7 +40,7 @@ public class TurnManager : MonoBehaviour
     }
     private void Update()
     {
-        if(countStart && !isLoading)
+        if (countStart && !isLoading)
             TurnTimer();
     }
 
@@ -72,7 +75,7 @@ public class TurnManager : MonoBehaviour
 
         isLoading = true;
     }
-    
+
     public IEnumerator StartTurnCo(bool playerTurn)
     {
         isLoading = true;
@@ -95,6 +98,8 @@ public class TurnManager : MonoBehaviour
 
         countStart = true;
         isLoading = false;
+
+        GameManager.instance.EndTurnBtnSetup(myTurn);
     }
 
     public void StartTurn()

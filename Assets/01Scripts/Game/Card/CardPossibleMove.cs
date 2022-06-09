@@ -12,7 +12,7 @@ public class CardPossibleMove
         int moveSpace;
         mapSize = MapManager.instance.mapSize;
         Tile[,] mapData = MapManager.instance.mapData;
-        
+
         canMovePointList = new List<Coordinate>();
 
         CurrentX = entity.coordinate.x;
@@ -20,7 +20,7 @@ public class CardPossibleMove
 
         moveSpace = entity.card.cost + 1;
 
-        if(!attack && entity.card.role == CardRole.shooter)
+        if (!attack && entity.card.cardType.attack_type == AttackType.shooter)
         {
             moveSpace = 1;
         }
@@ -36,19 +36,21 @@ public class CardPossibleMove
 
             Tile rightDir = mapData[i, CurrentY];
 
-            if (rightDir.tileState == TileState.empty)
+            if (rightDir.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(i, CurrentY));
             }
-            else
+            else if (rightDir.onTarget != entity.belong)
             {
-                if (rightDir.tileState == TileState.onOpponentMonster || rightDir.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(i, CurrentY));
-                }
-
+                canMovePointList.Add(new Coordinate(i, CurrentY));
                 break;
             }
+            else if (rightDir.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(i, CurrentY));
+                break;
+            }
+
             i++;
         }
 
@@ -60,20 +62,22 @@ public class CardPossibleMove
                 break;
 
             Tile leftDir = mapData[i, CurrentY];
-
-            if (leftDir.tileState == TileState.empty)
+            if (leftDir.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(i, CurrentY));
             }
-            else
+            else if(leftDir.onTarget != entity.belong)
             {
-                if (leftDir.tileState == TileState.onOpponentMonster || leftDir.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(i, CurrentY));
-                }
-
+                
+                canMovePointList.Add(new Coordinate(i, CurrentY));
                 break;
             }
+            else if (leftDir.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(i, CurrentY));
+                break;
+            }
+
             i--;
         }
 
@@ -86,19 +90,21 @@ public class CardPossibleMove
 
             Tile upDir = mapData[CurrentX, i];
 
-            if (upDir.tileState == TileState.empty)
+            if (upDir.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(CurrentX, i));
             }
-            else
+            else if (upDir.onTarget != entity.belong)
             {
-                if (upDir.tileState == TileState.onOpponentMonster || upDir.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(CurrentX, i));
-                }
-
+                canMovePointList.Add(new Coordinate(CurrentX, i));
                 break;
             }
+            else if (upDir.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(CurrentX, i));
+                break;
+            }
+
             i++;
         }
 
@@ -111,21 +117,121 @@ public class CardPossibleMove
 
             Tile downDir = mapData[CurrentX, i];
 
-            if (downDir.tileState == TileState.empty)
+            if (downDir.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(CurrentX, i));
             }
-            else
+            else if (downDir.onTarget != entity.belong)
             {
-                if (downDir.tileState == TileState.onOpponentMonster || downDir.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(CurrentX, i));
-                }
-
+                canMovePointList.Add(new Coordinate(CurrentX, i));
                 break;
             }
+            else if (downDir.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(CurrentX, i));
+                break;
+            }
+
             i--;
         }
+
+        //while (true)
+        //{
+        //    if (i >= mapSize || i - CurrentX > moveSpace)
+        //        break;
+
+        //    Tile rightDir = mapData[i, CurrentY];
+
+        //    if (rightDir.isEmpty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(i, CurrentY));
+        //    }
+        //    else
+        //    {
+        //        if (rightDir.tileState == TileState.onEnermyEntity || rightDir.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(i, CurrentY));
+        //        }
+
+        //        break;
+        //    }
+        //    i++;
+        //}
+
+        //// Left        
+        //i = CurrentX - 1;
+        //while (true)
+        //{
+        //    if (i < 0 || CurrentX - i > moveSpace)
+        //        break;
+
+        //    Tile leftDir = mapData[i, CurrentY];
+
+        //    if (leftDir.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(i, CurrentY));
+        //    }
+        //    else
+        //    {
+        //        if (leftDir.tileState == TileState.onEnermyEntity || leftDir.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(i, CurrentY));
+        //        }
+
+        //        break;
+        //    }
+        //    i--;
+        //}
+
+        //// Up        
+        //i = CurrentY + 1;
+        //while (true)
+        //{
+        //    if (i >= mapSize || i - CurrentY > moveSpace)
+        //        break;
+
+        //    Tile upDir = mapData[CurrentX, i];
+
+        //    if (upDir.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(CurrentX, i));
+        //    }
+        //    else
+        //    {
+        //        if (upDir.tileState == TileState.onEnermyEntity || upDir.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(CurrentX, i));
+        //        }
+
+        //        break;
+        //    }
+        //    i++;
+        //}
+
+        //// Down
+        //i = CurrentY - 1;
+        //while (true)
+        //{
+        //    if (i < 0 || CurrentY - i > moveSpace)
+        //        break;
+
+        //    Tile downDir = mapData[CurrentX, i];
+
+        //    if (downDir.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(CurrentX, i));
+        //    }
+        //    else
+        //    {
+        //        if (downDir.tileState == TileState.onEnermyEntity || downDir.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(CurrentX, i));
+        //        }
+
+        //        break;
+        //    }
+        //    i--;
+        //}
         return canMovePointList;
     }
 
@@ -144,10 +250,11 @@ public class CardPossibleMove
 
         int moveSpace = (entity.card.cardType.moveType == MoveType.Queen) ? entity.card.cost : entity.card.cost + 1;
 
-        if (!attack && entity.card.role == CardRole.shooter)
+        if (!attack && entity.card.cardType.attack_type == AttackType.shooter)
         {
             moveSpace = 1;
         }
+
         // Right Up
         while (true)
         {
@@ -159,19 +266,21 @@ public class CardPossibleMove
 
             Tile rightUp = mapData[i, j];
 
-            if (rightUp.tileState == TileState.empty)
+            if (rightUp.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(i, j));
             }
-            else
+            else if(rightUp.onTarget != entity.belong)
             {
-                if (rightUp.tileState == TileState.onOpponentMonster || rightUp.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(i, j));
-                }
-
+                canMovePointList.Add(new Coordinate(i, j));
                 break;
             }
+            else if (rightUp.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(i, j));
+                break;
+            }
+
             i++;
             j++;
         }
@@ -180,7 +289,7 @@ public class CardPossibleMove
 
         i = CurrentX - 1;
         j = CurrentY + 1;
-        
+
         while (true)
         {
             if (i < 0 || j >= mapSize)
@@ -191,19 +300,21 @@ public class CardPossibleMove
 
             Tile leftUp = mapData[i, j];
 
-            if (leftUp.tileState == TileState.empty)
+            if (leftUp.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(i, j));
             }
-            else
+            else if (leftUp.onTarget != entity.belong)
             {
-                if (leftUp.tileState == TileState.onOpponentMonster || leftUp.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(i, j));
-                }
-
+                canMovePointList.Add(new Coordinate(i, j));
                 break;
             }
+            else if (leftUp.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(i, j));
+                break;
+            }
+
             i--;
             j++;
         }
@@ -223,19 +334,21 @@ public class CardPossibleMove
 
             Tile rightDown = mapData[i, j];
 
-            if (rightDown.tileState == TileState.empty)
+            if (rightDown.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(i, j));
             }
-            else
+            else if(rightDown.onTarget != entity.belong)
             {
-                if (rightDown.tileState == TileState.onOpponentMonster || rightDown.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(i, j));
-                }
-
+                canMovePointList.Add(new Coordinate(i, j));
                 break;
             }
+            else if (rightDown.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(i, j));
+                break;
+            }
+
             i++;
             j--;
         }
@@ -255,22 +368,149 @@ public class CardPossibleMove
 
             Tile leftDown = mapData[i, j];
 
-            if (leftDown.tileState == TileState.empty)
+            if (leftDown.isEmpty)
             {
                 canMovePointList.Add(new Coordinate(i, j));
             }
-            else
+            else if(leftDown.onTarget != entity.belong)
             {
-                if (leftDown.tileState == TileState.onOpponentMonster || leftDown.tileState == TileState.opponentOutpost)
-                {
-                    canMovePointList.Add(new Coordinate(i, j));
-                }
-
+                canMovePointList.Add(new Coordinate(i, j));
                 break;
             }
+            else if (leftDown.outpost.belong != entity.belong)
+            {
+                canMovePointList.Add(new Coordinate(i, j));
+                break;
+            }
+
             i--;
             j--;
         }
+
+
+        //// Right Up
+        //while (true)
+        //{
+        //    if (i >= mapSize || j >= mapSize)
+        //        break;
+
+        //    if (i - CurrentX > moveSpace || j - CurrentY > moveSpace)
+        //        break;
+
+        //    Tile rightUp = mapData[i, j];
+
+        //    if (rightUp.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(i, j));
+        //    }
+        //    else
+        //    {
+        //        if (rightUp.tileState == TileState.onEnermyEntity || rightUp.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(i, j));
+        //        }
+
+        //        break;
+        //    }
+        //    i++;
+        //    j++;
+        //}
+
+        //// Left Up
+
+        //i = CurrentX - 1;
+        //j = CurrentY + 1;
+
+        //while (true)
+        //{
+        //    if (i < 0 || j >= mapSize)
+        //        break;
+
+        //    if (CurrentX - i > moveSpace || j - CurrentY > moveSpace)
+        //        break;
+
+        //    Tile leftUp = mapData[i, j];
+
+        //    if (leftUp.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(i, j));
+        //    }
+        //    else
+        //    {
+        //        if (leftUp.tileState == TileState.onEnermyEntity || leftUp.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(i, j));
+        //        }
+
+        //        break;
+        //    }
+        //    i--;
+        //    j++;
+        //}
+
+        //// Right Down
+
+        //i = CurrentX + 1;
+        //j = CurrentY - 1;
+
+        //while (true)
+        //{
+        //    if (i >= mapSize || j < 0)
+        //        break;
+
+        //    if (i - CurrentX > moveSpace || CurrentY - j > moveSpace)
+        //        break;
+
+        //    Tile rightDown = mapData[i, j];
+
+        //    if (rightDown.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(i, j));
+        //    }
+        //    else
+        //    {
+        //        if (rightDown.tileState == TileState.onEnermyEntity || rightDown.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(i, j));
+        //        }
+
+        //        break;
+        //    }
+        //    i++;
+        //    j--;
+        //}
+
+        //// Left Down
+
+        //i = CurrentX - 1;
+        //j = CurrentY - 1;
+
+        //while (true)
+        //{
+        //    if (i < 0 || j < 0)
+        //        break;
+
+        //    if (CurrentX - i > moveSpace || CurrentY - j > moveSpace)
+        //        break;
+
+        //    Tile leftDown = mapData[i, j];
+
+        //    if (leftDown.tileState == TileState.empty)
+        //    {
+        //        canMovePointList.Add(new Coordinate(i, j));
+        //    }
+        //    else
+        //    {
+        //        if (leftDown.tileState == TileState.onEnermyEntity || leftDown.tileState == TileState.enermyOutpost)
+        //        {
+        //            canMovePointList.Add(new Coordinate(i, j));
+        //        }
+
+        //        break;
+        //    }
+        //    i--;
+        //    j--;
+        //}
 
         return canMovePointList;
     }

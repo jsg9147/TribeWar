@@ -2,6 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum EntityBelong
+{
+    Player,
+    Enermy,
+    AI,
+    None
+}
+
 public enum LogCategory
 {
     Summon,
@@ -14,11 +22,12 @@ public enum LogCategory
     Defend,
     Outpost_Attack
 }
-public enum EffectClass :int
+public enum EffectTime : int
 {
-    Triggered, 
+    Triggered,
     Activated,
     Battle,
+    Tribute,
     None
 }
 
@@ -27,9 +36,9 @@ public enum Timing
     Magic, Common, Summon, Battle
 }
 
-public enum EcardState 
-{ 
-    Nothing, CanMouseOver, CanMouseDrag 
+public enum EcardState
+{
+    Nothing, CanMouseOver, CanMouseDrag
 }
 
 public enum MoveType
@@ -42,10 +51,11 @@ public enum CardCategory
     Monster, Magic, Trap
 }
 
-public enum CardRole
+public enum AttackType
 {
     melee,
-    shooter
+    shooter,
+    runner
 }
 
 public enum Tribe
@@ -62,7 +72,7 @@ public enum EffectTarget
     AllPlayers,
     ThisCard,
     PlayerCard,
-    OpponentCard,
+    EnermyCard,
     TargetCard,
     RandomPlayerCard,
     RandomOpponentCard,
@@ -77,16 +87,19 @@ public enum EffectTarget
     PlayerDragon,
     OpponentDragon,
     TribeTarget,
+    TargetWarrior,
+    Tile,
     None
 }
 
 public enum TileState
 {
     onPlayerMonster,
-    onOpponentMonster,
+    onEnermyEntity,
     playerOutpost,
-    opponentOutpost,
+    enermyOutpost, // 추후 삭제 하고 outpost 를 entity 화 시켜야함 지금처럼 같이 두지 말고
     empty,
+    AIMonster,
     None
 }
 
@@ -96,4 +109,16 @@ public enum CanSpawn
     opponentCanSpawn,
     all,
     nothing
+}
+
+public enum EffectClass
+{
+    increase,
+    decrease,
+    destroy,
+    move,
+    summon,
+    tribute,
+    targetTribute,
+    control
 }

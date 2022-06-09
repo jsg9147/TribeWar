@@ -34,7 +34,6 @@ public class GamePlayer : NetworkBehaviour
     [SyncVar] public bool canSelectEffectTarget;
     [SyncVar] public bool canMove;
 
-    Battle battle = new Battle();
     CardMove cardMove = new CardMove();
 
     private MyNetworkManager game;
@@ -57,7 +56,7 @@ public class GamePlayer : NetworkBehaviour
         CmdSetPlayerRecord((int)WebMain.instance.web.win, (int)WebMain.instance.web.lose);
         gameObject.name = "LocalGamePlayer";
         MatchManager.instance.FindLocalGamePlayer(this);
-        
+
     }
 
     [Command]
@@ -65,7 +64,7 @@ public class GamePlayer : NetworkBehaviour
     {
         this.HandlePlayerWinUpdate(this.playerWin, win);
         this.HandlePlayerLoseUpdate(this.playerLose, lose);
-        
+
     }
 
     public void CreatePlayerProfiles()
@@ -76,7 +75,7 @@ public class GamePlayer : NetworkBehaviour
         {
             profile = Instantiate(playerProfilePrefabs);
             profile.PlayerProfileUpdate(playerWin, playerLose, playerName, SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId)), hasAuthority);
-            profile.transform.parent = Game.playerSlotObject.transform;
+            profile.transform.SetParent(Game.playerSlotObject.transform);
             profile.transform.localScale = Vector3.one;
             isCreate = true;
         }
@@ -171,7 +170,7 @@ public class GamePlayer : NetworkBehaviour
     public void CanEndGame()
     {
         QuitLobby();
-        
+
         Game.EndGame();
     }
 
@@ -198,15 +197,15 @@ public class GamePlayer : NetworkBehaviour
             SteamMatchmaking.LeaveLobby(SteamLobby.instance.currentLobby);
             game = null;
         }
-        if(profile != null)
+        if (profile != null)
             Destroy(profile.gameObject);
         Debug.Log("LobbyPlayer destroyed. Returning to main menu.");
     }
     public override void OnStopClient()
-    {        
+    {
         Debug.Log(playerName + " is quiting the game.");
 
-        if(hasAuthority == false)
+        if (hasAuthority == false)
             GameManager.instance?.DisconnectServerPlayer();
 
         Game.GamePlayers.Remove(this);
@@ -217,7 +216,7 @@ public class GamePlayer : NetworkBehaviour
 
     public void DeckCountingUpdate(int oldValue, int newValue)
     {
-        if(isServer)
+        if (isServer)
             this.deckCount = newValue;
         CardManager.instance.Deck_Counting_Update(hasAuthority, newValue);
     }
@@ -234,18 +233,18 @@ public class GamePlayer : NetworkBehaviour
         NetworkRpcFunc.instance.RpcSetOutpost(new Coordinate(outpostCoordVec), server);
     }
 
-    [Command]
-    public void CmdSummon(bool server, string card_id, Vector3 coordVec)
-    {
-        NetworkRpcFunc.instance.RpcSummon(server, card_id, new Coordinate(coordVec));
-        NetworkRpcFunc.instance.RpcSetMostFrontOrderInit(server);
-    }
+    //[Command]
+    //public void CmdSummon(bool server, string card_id, Vector3 coordVec)
+    //{
+    //    NetworkRpcFunc.instance.RpcSummon(server, card_id, new Coordinate(coordVec));
+    //    NetworkRpcFunc.instance.RpcSetMostFrontOrderInit(server);
+    //}
 
-    [Command]
-    public void CmdSetSummonCoord(Vector3 coordVec)
-    {
-        NetworkRpcFunc.instance.RpcSetCoordinateData(coordVec);
-    }
+    //[Command]
+    //public void CmdSetSummonCoord(Vector3 coordVec)
+    //{
+    //    NetworkRpcFunc.instance.RpcSetCoordinateData(coordVec);
+    //}
 
     [Command]
     public void CmdTryPutCard(bool server, string card_id, Vector3 selectPos)
@@ -257,7 +256,7 @@ public class GamePlayer : NetworkBehaviour
     public void CmdSelectTribute(int entityID, bool server)
     {
         NetworkRpcFunc.instance.RpcSelectTribute(server, entityID);
-    }    
+    }
 
     [Command]
     public void CmdEffectSolve(string card_id, bool server)
@@ -290,42 +289,27 @@ public class GamePlayer : NetworkBehaviour
         NetworkRpcFunc.instance.RpcSelect_Effect_Target(entityID, targetPlayer, server);
     }
 
-    // 상대방이 내 카드를 지정 한 효과를 발동 했을때
     [Command]
-    public void CmdOpponentTargetEffect(int entityID, string card_id, bool server)
+    public void CmdRandomTargetAppoint(int entity_Id, string card_id)
     {
-        NetworkRpcFunc.instance.RpcOpponentTargetEffect(entityID, card_id, server);
-    }
+        //List<Entity> playerEntities = EntityManager.instance.playerEntities;
+        //List<Entity> opponentEntities = EntityManager.instance.opponentEntities;
 
-    [Command]
-    public void CmdPlayerTargetEffect(int entityID, string card_id, bool server)
-    {
-        NetworkRpcFunc.instance.RpcPlayerTargetEffect(entityID, card_id, server);
-    }
+        //bool randomPlayer;
 
+        //if (playerEntities.Count == 0 && opponentEntities.Count == 0)
+        //    return;
+        //else if (playerEntities.Count == 0)
+        //    randomPlayer = false;
+        //else if (opponentEntities.Count == 0)
+        //    randomPlayer = true;
+        //else
+        //    randomPlayer = Random.Range(0, 2) == 0;
 
-    // 랜덤타겟 테스트
-    [Command]
-    public void CmdRandomTargetAppoint(string card_id, bool server)
-    {
-        List<Entity> playerEntities = EntityManager.instance.playerEntities;
-        List<Entity> opponentEntities = EntityManager.instance.opponentEntities;
+        //int targetIndex =
+        //    randomPlayer ? Random.Range(0, playerEntities.Count - 1) : Random.Range(0, opponentEntities.Count - 1);
 
-        bool randomPlayer;
-
-        if (playerEntities.Count == 0 && opponentEntities.Count == 0)
-            return;
-        else if (playerEntities.Count == 0)
-            randomPlayer = false;
-        else if (opponentEntities.Count == 0)
-            randomPlayer = true;
-        else
-            randomPlayer = Random.Range(0, 2) == 0;
-
-        int targetIndex =
-            randomPlayer ? Random.Range(0, playerEntities.Count - 1) : Random.Range(0, opponentEntities.Count - 1);
-
-        NetworkRpcFunc.instance.RpcRandomTargetEffect(randomPlayer, targetIndex, card_id, server);
+        NetworkRpcFunc.instance.RpcRandomTargetEffect(entity_Id, card_id);
     }
 
     [Command]
@@ -334,7 +318,7 @@ public class GamePlayer : NetworkBehaviour
         NetworkRpcFunc.instance.RpcCardMove(entityID, targetPlyaer, movePos, server);
     }
 
-    
+
     [Command]
     public void CmdTurnSetup()
     {
@@ -351,8 +335,15 @@ public class GamePlayer : NetworkBehaviour
     [Command]
     public void CmdGameResult(bool gameResult, bool server)
     {
-        NetworkRpcFunc.instance.RpcGameResult(gameResult, server); 
+        NetworkRpcFunc.instance.RpcGameResult(gameResult, server);
     }
+
+    [Command]
+    public void CmdMoveEffect(int entity_Id, Vector3 tilePos)
+    {
+        NetworkRpcFunc.instance.RpcTarget_Effect_Solver(entity_Id, tilePos);
+    }
+
 
     #endregion
 }

@@ -17,6 +17,6 @@ public class MainScreen : MonoBehaviour
     void WelcomeConnectText()
     {
         string user_name = SteamFriends.GetPersonaName();
-        welcome_Text.text = user_name + "´Ô \n Á¢¼ÓÀ» È¯¿µÇÕ´Ï´Ù.";
+        welcome_Text.text = user_name + "ë‹˜ \n ì ‘ì†ì„ í™˜ì˜í•©ë‹ˆë‹¤.";
     }
 }

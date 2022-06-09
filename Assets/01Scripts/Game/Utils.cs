@@ -70,6 +70,14 @@ public class Coordinate
         this.y = reverseY;
         this.vector3Pos = new Vector2(reverseX, reverseY);
     }
+
+    public bool MaxDistance(Coordinate coord, int distance)
+    {
+        int distanceX = Mathf.Abs(coord.x - x);
+        int distanceY = Mathf.Abs(coord.y - y);
+
+        return distanceX + distanceY <= distance;
+    }
 }
 
 

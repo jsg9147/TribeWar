@@ -10,14 +10,13 @@ public class Web : MonoBehaviour
 {
     public Items items;
 
-    // √÷±Ÿ ªÁøÎ«— µ¶ º≥¡§¿Œµ• ¿Ã∞≈ ¿ÃøÎ«ÿº≠ ∞‘¿” Ω√¿€«“∂ß æÓ¥¿µ¶¿∏∑Œ «“¡ˆ ¡§«‘
     public int recentlyDeckIndex;
     public List<Card> ItemDB = new List<Card>();
     public List<CardPack> cardPacks = new List<CardPack>();
 
     public List<Deck> myDeckList;
 
-    public Dictionary<string, int> userItems = new Dictionary<string, int>(); // æ∆¿Ã≈€ æ∆¿Ãµ, ∞πºˆ
+    public Dictionary<string, int> userItems = new Dictionary<string, int>();
     public Dictionary<string, string> packInfo = new Dictionary<string, string>();
 
     Action<string> deckListCallback;
@@ -26,31 +25,35 @@ public class Web : MonoBehaviour
     Action<string> packListCallback;
     Action<string> pack_CardList_Callback;
 
-    string userID;
+    string userID, authority;
     public float win, lose = 0;
     public Deck selected_Deck;
 
     #region URL List
-    
-    public static string databaseServerURL = "http://58.127.49.117:8080/mydb/";
-    
-    string verCheckURL = "http://58.127.49.117:8080/";
-    string get_CardDatabase_Json_URL = databaseServerURL + "CardDataExportJson.php";
+
+    public static string databaseServerURL = "http://192.168.0.7:80/tribe_db/";
+
+    string verCheckURL = "http://192.168.0.7:80";
+    string get_CardDatabase_Json_URL = databaseServerURL + "GetCardData.php";
     string loginURL = databaseServerURL + "Login.php";
-    string get_Inven_CardIDs_URL = databaseServerURL + "GetInvenCardIDs.php";
+    string get_My_Deck_Card_List_URL = databaseServerURL + "GetMyDeckCard.php";
+    string get_Pack_Info_URL = databaseServerURL + "GetPackInfo.php";
+    string get_My_Collection_URL = databaseServerURL + "GetMyCollection.php";
+    string get_Card_List_Of_Pack_URL = databaseServerURL + "GetCardListOfPack.php";
+    string save_Deck_Data_URL = databaseServerURL + "SaveDeckData.php";
+
+    string get_deck_info_URL = databaseServerURL + "GetDeckInfo.php";
+
+    string save_MyDeck_List_URL = databaseServerURL + "SaveMyDeckList.php";
+    string delete_Deck_URL = databaseServerURL + "DeleteDeck.php";
+
+    // Before modify php file
     string sellItemURL = databaseServerURL + "SellItem.php";
-    string get_Deck_Card_List_URL = databaseServerURL + "GetDeckCardList.php";
-    string get_Deck_Title_URL = databaseServerURL + "GetDeckTitle.php";
-    string updateUsersDeckURL = databaseServerURL + "UpdateUsersDeck.php";
-    string updateUsersDeckInfoURL = databaseServerURL + "UpdateDeckInfo.php";
-    string deleteDeckURL = databaseServerURL + "DeleteDeck.php";
     string getRecentlyUsedDeckURL = databaseServerURL + "GetRecentlyUsedDeck.php";
     string UpdateRecentlyUsedDeckURL = databaseServerURL + "UpdateRecentlyUsedDeck.php";
     string UsernameRegisterURL = databaseServerURL + "UsernameRegister.php";
 
-    // ªı∑Œ √ﬂ∞°
-    string GetPackInfoURL = databaseServerURL + "GetPackInfo.php";
-    string GetPackCardListURL = databaseServerURL + "GetPackCardList.php";
+
     string SetBuyCardURL = databaseServerURL + "SetBuyCard.php";
 
     #endregion
@@ -93,7 +96,6 @@ public class Web : MonoBehaviour
         {
             userID = SteamUser.GetSteamID().ToString();
         }
-        StartCoroutine(GetRecentlyUsedDeck(SteamUser.GetSteamID().ToString()));
         StartCoroutine(GetCardDatabase());
     }
 
@@ -117,7 +119,7 @@ public class Web : MonoBehaviour
                     Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
                     break;
                 case UnityWebRequest.Result.Success:
-                    Debug.Log(webRequest.downloadHandler.text); // webRequest.downloadHandler.text ¿Ã∞‘ ≈ÿΩ∫∆Æ∏¶ πﬁæ∆ø»
+                    Debug.Log(webRequest.downloadHandler.text); // webRequest.downloadHandler.text
                     break;
             }
         }
@@ -138,70 +140,33 @@ public class Web : MonoBehaviour
             }
             else
             {
-                Debug.Log(www.downloadHandler.text);
-                WebMain.instance.userInfo.SetCredentials(_userID);
+                string jsonArrayString = www.downloadHandler.text;
+                Debug.Log(www.downloadHandler.text); // ÎØ∏ÏÇ¨Ïö© ÏΩîÎìú ÌëúÏãúÏö©
+                //WebMain.instance.userInfo.SetCredentials(_userID); // ÎØ∏ÏÇ¨Ïö© ÏÇ≠Ï†ú ÌÖåÏä§Ìä∏ Ìï¥Î¥êÏïºÌï®
 
-                if (www.downloadHandler.text.Contains("Wrong Credentials.") || www.downloadHandler.text.Contains("UserId does not exists."))
+                if (www.downloadHandler.text.Contains("User register is successful"))
                 {
-                    Debug.Log("Try Again");
-                }
-                else if (www.downloadHandler.text.Contains("NewBeginer"))
-                {
-                    if (SteamManager.Initialized)
-                    {
-                        WebMain.instance.userInfo.SetID(SteamUser.GetSteamID().ToString());
-                        StartCoroutine(WebMain.instance.web.Register(SteamFriends.GetPersonaName()));
-                    }
+                    win = 0;
+                    lose = 0;
                 }
                 else
                 {
-                    string jsonArrayString = www.downloadHandler.text;
                     JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
-
                     win = float.Parse(jsonArray[0].AsObject["win"]);
                     lose = float.Parse(jsonArray[0].AsObject["lose"]);
-
-                    StartCoroutine(GetDeckInfo(_userID, deckListCallback));
-                    StartCoroutine(GetDeckItemList(_userID, cardListOfDeckCallback));
-                    StartCoroutine(GetUserOwnItems(_userID, myOwnCardListCallback));
-                    StartCoroutine(GetPackList(packListCallback));
-                    StartCoroutine(Get_Pack_CardList(pack_CardList_Callback));
+                    if (jsonArray[0].AsObject["recently_deck"] != null)
+                    {
+                        recentlyDeckIndex = int.Parse(jsonArray[0].AsObject["recently_deck"]);
+                    }
                 }
-            }
-        }
-    }
 
-    // ¿Ã∏ß ∫Ø∞Ê «ÿ¡‡æﬂ«‘ URL µµ jsg
-    public IEnumerator Register(string username)
-    {
-        WWWForm form = new WWWForm();
+                StartCoroutine(GetDeckInfo(_userID, deckListCallback));
 
-        if (SteamManager.Initialized)
-        {
-            form.AddField("user_id", SteamUser.GetSteamID().ToString());
-            form.AddField("name", username);
-        }
+                StartCoroutine(GetDeckItemList(_userID, cardListOfDeckCallback));
+                StartCoroutine(GetUserCollection(_userID, myOwnCardListCallback));
+                StartCoroutine(GetPackList(packListCallback));
+                StartCoroutine(Get_Pack_CardList(pack_CardList_Callback));
 
-        using (UnityWebRequest www = UnityWebRequest.Post(UsernameRegisterURL, form))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                // Debug.Log(www.downloadHandler.text);
-                if (www.downloadHandler.text.Contains("Success"))
-                {
-                    WebMain.instance.userInfo.SetUsername(username);
-                    //photonManager.Connect();
-                }
-                else
-                {
-
-                }
             }
         }
     }
@@ -222,7 +187,6 @@ public class Web : MonoBehaviour
             }
             else
             {
-
                 JSONNode json = JSON.Parse(www.downloadHandler.text);
 
                 foreach (JSONNode card in json)
@@ -243,8 +207,8 @@ public class Web : MonoBehaviour
         {
             for (int i = 0; i < jsonArray.Count; i++)
             {
-                string card_id = jsonArray[i].AsObject["card_id"];
-                int card_count = jsonArray[i].AsObject["card_count"];
+                string card_id = jsonArray[i].AsObject["card"];
+                int card_count = jsonArray[i].AsObject["count"];
 
                 userItems.Add(card_id, card_count);
             }
@@ -253,13 +217,13 @@ public class Web : MonoBehaviour
         yield return null;
     }
 
-    public IEnumerator GetUserOwnItems(string _userID, System.Action<string> callback)
+    public IEnumerator GetUserCollection(string _userID, System.Action<string> callback)
     {
         WWWForm form = new WWWForm();
 
         form.AddField("user_id", _userID);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(get_Inven_CardIDs_URL, form))
+        using (UnityWebRequest www = UnityWebRequest.Post(get_My_Collection_URL, form))
         {
             yield return www.SendWebRequest();
 
@@ -277,98 +241,14 @@ public class Web : MonoBehaviour
     }
 
 
-    #region DeckItem
-    public IEnumerator GetDeckItemList(string _userID, System.Action<string> callback)
-    {
-        WWWForm form = new WWWForm();
 
-        form.AddField("user_id", _userID);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(get_Deck_Card_List_URL, form))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                string jsonArray = www.downloadHandler.text;
-
-                callback(jsonArray);
-            }
-        }
-    }
-
-    IEnumerator GetUserDeckListRoutine(string jsonArrayString)
-    {
-        JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
-        Deck deck;
-        if (jsonArray != null)
-        {
-            for (int i = 0; i < jsonArray.Count; i++)
-            {
-                int deck_Index = jsonArray[i].AsObject["deck_index"];
-                string deck_title = jsonArray[i].AsObject["deck_name"];
-                string representCard = jsonArray[i].AsObject["represent_card"];
-
-                if(myDeckList.Exists(x => x.index == deck_Index))
-                {
-                    deck = myDeckList.Find(x => x.index == deck_Index);
-                }
-                else
-                {
-                    deck = new Deck();
-                    deck.index = deck_Index;
-                    myDeckList.Add(deck);
-                }
-
-                deck.title = deck_title;
-                deck.representCard = CardDatabase.instance.CardData(representCard);
-
-            }
-        }
-        yield return null;
-    }
-
-    IEnumerator CreateCardOfDeckRoutine(string jsonArrayString)
-    {
-        JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
-
-        if (jsonArray != null)
-        {
-            for (int i = 0; i < jsonArray.Count; i++)
-            {
-                string card_id = jsonArray[i].AsObject["card_id"];
-                int card_count = jsonArray[i].AsObject["card_count"];
-                int deck_index = jsonArray[i].AsObject["deck_index"];
-
-                if(myDeckList.Exists(x => x.index == deck_index))
-                {
-                    var deck = myDeckList.Find(x => x.index == deck_index);
-                    deck.SetCard(CardDatabase.instance.CardData(card_id), card_count);
-                }
-                else
-                {
-                    Deck deck = new Deck();
-                    deck.index = deck_index;
-                    deck.SetCard(CardDatabase.instance.CardData(card_id), card_count);
-                    myDeckList.Add(deck);
-                }
-            }
-        }
-        yield return null;
-    }
-
-    #endregion
-
-    #region ƒ´µÂ∆— µ•¿Ã≈Õ
+    #region Get card list of pack
     public IEnumerator Get_Pack_CardList(Action<string> callback)
     {
         WWWForm form = new WWWForm();
 
-        using (UnityWebRequest www = UnityWebRequest.Post(GetPackCardListURL, form))
+        using (UnityWebRequest www = UnityWebRequest.Post(get_Card_List_Of_Pack_URL, form))
         {
             yield return www.SendWebRequest();
 
@@ -392,9 +272,9 @@ public class Web : MonoBehaviour
         {
             for (int i = 0; i < jsonArray.Count; i++)
             {
-                string pack_code = jsonArray[i].AsObject["pack_code"];
-                int number = jsonArray[i].AsObject["card_number"];
-                string rarity = jsonArray[i].AsObject["rarity"];
+                string pack_code = jsonArray[i].AsObject["id"];
+                int number = jsonArray[i].AsObject["number"];
+                int rarity = jsonArray[i].AsObject["rarity"];
 
                 cardPack = cardPacks.Find(x => x.GetPackCode() == pack_code);
                 if (cardPack == null)
@@ -411,12 +291,13 @@ public class Web : MonoBehaviour
         yield return null;
     }
 
-    public IEnumerator Set_Buy_Card(string card_code)
+    public IEnumerator Set_Buy_Card(string card_id, int count)
     {
         WWWForm form = new WWWForm();
 
         form.AddField("user_id", SteamUser.GetSteamID().ToString());
-        form.AddField("card_code", card_code);
+        form.AddField("card", card_id);
+        form.AddField("count", count);
 
         using (UnityWebRequest www = UnityWebRequest.Post(SetBuyCardURL, form))
         {
@@ -435,12 +316,11 @@ public class Web : MonoBehaviour
 
     #endregion
 
-
-    public IEnumerator GetDeckInfo(string _userID, System.Action<string> callback)
+    public IEnumerator GetDeckInfo(string id, System.Action<string> callback)
     {
         WWWForm form = new WWWForm();
-        form.AddField("user_id", _userID);
-        using (UnityWebRequest www = UnityWebRequest.Post(get_Deck_Title_URL, form))
+        form.AddField("user_id", id);
+        using (UnityWebRequest www = UnityWebRequest.Post(get_deck_info_URL, form))
         {
             yield return www.SendWebRequest();
 
@@ -456,16 +336,94 @@ public class Web : MonoBehaviour
         }
     }
 
-    public IEnumerator UpdateDeckInfo(int _deckIndex, string _itemCount, string _itemID)
+    public IEnumerator Save_Edit_Deck(Deck deck)
+    {
+        WWWForm form;
+        var user_id = SteamUser.GetSteamID().ToString();
+        int deck_index = deck.index;
+
+        form = new WWWForm();
+
+        form.AddField("user_id", SteamUser.GetSteamID().ToString());
+        form.AddField("deck_index", deck_index);
+        form.AddField("deck_name", deck.name);
+        form.AddField("represent_card", deck.representCard.id);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(save_MyDeck_List_URL, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log(www.error);
+            }
+            else
+            {
+                Debug.Log(www.downloadHandler.text);
+
+                foreach (var card_ID in deck.cardCount.Keys)
+                {
+                    form = new WWWForm();
+                    form.AddField("user_id", user_id);
+                    form.AddField("deck_index", deck_index);
+                    form.AddField("card", card_ID);
+                    form.AddField("count", deck.cardCount[card_ID]);
+
+                    using (UnityWebRequest www1 = UnityWebRequest.Post(save_Deck_Data_URL, form))
+                    {
+                        yield return www1.SendWebRequest();
+
+                        if (www1.result != UnityWebRequest.Result.Success)
+                        {
+                            Debug.Log(www1.error);
+                        }
+                        else
+                        {
+                            Debug.Log(www1.downloadHandler.text);
+                        }
+                    }
+                }
+            }
+        }
+
+
+    }
+
+#if false
+    public IEnumerator Save_Edit_Deck(int _index, string _itemCount, string _itemID, bool complite)
+    {
+        WWWForm form = new WWWForm();
+
+        form.AddField("user_id", SteamUser.GetSteamID().ToString());
+        form.AddField("deck_index", _index);
+        form.AddField("card", _itemID);
+        form.AddField("count", _itemCount);
+        form.AddField("complite", complite.ToString());
+        print(complite.ToString());
+
+        using (UnityWebRequest www = UnityWebRequest.Post(save_Deck_Data_URL, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log(www.error);
+            }
+            else
+            {
+                Debug.Log(www.downloadHandler.text);
+            }
+        }
+
+    public IEnumerator UpdateMyDeckTitleName(int _deckIndex, string deckName)
     {
         WWWForm form = new WWWForm();
 
         form.AddField("user_id", SteamUser.GetSteamID().ToString());
         form.AddField("deck_index", _deckIndex);
-        form.AddField("card_count", _itemCount);
-        form.AddField("card_id", _itemID);
+        form.AddField("deck_name", deckName);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(updateUsersDeckURL, form))
+        using (UnityWebRequest www = UnityWebRequest.Post(save_MyDeck_List_URL, form))
         {
             yield return www.SendWebRequest();
 
@@ -475,17 +433,72 @@ public class Web : MonoBehaviour
             }
             else
             {
-                //ø°∑Ø ∏ﬁºº¡ˆ ∂ﬂ∏È ¡∂ƒ°«“ºˆ ¿÷∞‘ «ÿæﬂ«‘
                 Debug.Log(www.downloadHandler.text);
             }
         }
     }
+    }
+#endif
+    #region Get my deck's card list
+    public IEnumerator GetDeckItemList(string _userID, System.Action<string> callback)
+    {
+        WWWForm form = new WWWForm();
+
+        form.AddField("user_id", _userID);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(get_My_Deck_Card_List_URL, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log(www.error);
+            }
+            else
+            {
+                string jsonArray = www.downloadHandler.text;
+
+                callback(jsonArray);
+            }
+        }
+    }
+
+    IEnumerator CreateCardOfDeckRoutine(string jsonArrayString)
+    {
+        JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
+
+        if (jsonArray != null)
+        {
+            for (int i = 0; i < jsonArray.Count; i++)
+            {
+                int deck_index = jsonArray[i].AsObject["deck_index"];
+                string card_id = jsonArray[i].AsObject["card"];
+                int card_count = jsonArray[i].AsObject["count"];
+
+                if (myDeckList.Exists(x => x.index == deck_index))
+                {
+                    var deck = myDeckList.Find(x => x.index == deck_index);
+                    deck.SetCard(CardDatabase.instance.CardData(card_id), card_count);
+                }
+                else
+                {
+                    Deck deck = new Deck();
+                    deck.index = deck_index;
+                    deck.SetCard(CardDatabase.instance.CardData(card_id), card_count);
+                    myDeckList.Add(deck);
+                }
+            }
+        }
+        yield return null;
+    }
+
+    #endregion
 
     public IEnumerator GetPackList(Action<string> callback)
     {
         WWWForm form = new WWWForm();
 
-        using (UnityWebRequest www = UnityWebRequest.Post(GetPackInfoURL, form))
+        using (UnityWebRequest www = UnityWebRequest.Post(get_Pack_Info_URL, form))
         {
             yield return www.SendWebRequest();
 
@@ -497,10 +510,42 @@ public class Web : MonoBehaviour
             {
                 string jsonArray = www.downloadHandler.text;
                 callback(jsonArray);
-                //Debug.Log(www.downloadHandler.text);
+                //Debug.Log(jsonArray);
             }
         }
     }
+
+    IEnumerator GetUserDeckListRoutine(string jsonArrayString)
+    {
+        JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
+        Deck deck;
+        if (jsonArray != null)
+        {
+            for (int i = 0; i < jsonArray.Count; i++)
+            {
+                int deck_Index = jsonArray[i].AsObject["index"];
+                string deck_title = jsonArray[i].AsObject["name"];
+                string representCard = jsonArray[i].AsObject["represent_card"];
+
+                if (myDeckList.Exists(x => x.index == deck_Index))
+                {
+                    deck = myDeckList.Find(x => x.index == deck_Index);
+                }
+                else
+                {
+                    deck = new Deck();
+                    deck.index = deck_Index;
+                    myDeckList.Add(deck);
+                }
+
+                deck.name = deck_title;
+                if (representCard != null)
+                    deck.representCard = CardDatabase.instance.CardData(representCard);
+            }
+        }
+        yield return null;
+    }
+
     IEnumerator GetPackInfoRoutine(string jsonArrayString)
     {
         JSONArray jsonArray = JSON.Parse(jsonArrayString) as JSONArray;
@@ -508,7 +553,7 @@ public class Web : MonoBehaviour
         {
             for (int i = 0; i < jsonArray.Count; i++)
             {
-                string pack = jsonArray[i].AsObject["pack_code"];
+                string pack = jsonArray[i].AsObject["id"];
                 string name = jsonArray[i].AsObject["name"];
 
                 packInfo.Add(pack, name);
@@ -525,7 +570,7 @@ public class Web : MonoBehaviour
         form.AddField("user_id", userID);
         form.AddField("deck_index", _deckIndex);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(deleteDeckURL, form))
+        using (UnityWebRequest www = UnityWebRequest.Post(delete_Deck_URL, form))
         {
             yield return www.SendWebRequest();
 
@@ -536,32 +581,6 @@ public class Web : MonoBehaviour
             else
             {
                 Debug.Log(www.downloadHandler.text);
-            }
-        }
-    }
-
-    public IEnumerator GetRecentlyUsedDeck(string _userID)
-    {
-        WWWForm form = new WWWForm();
-
-        form.AddField("user_id", _userID);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(getRecentlyUsedDeckURL, form))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                int index = 0;
-                if(www.downloadHandler.text != null)
-                {
-                    index = Int32.Parse(www.downloadHandler.text);
-                }
-                recentlyDeckIndex = index;
             }
         }
     }
@@ -589,34 +608,8 @@ public class Web : MonoBehaviour
         }
     }
 
-    public IEnumerator UpdateMyDeckTitleName(int _deckIndex, string deckName)
-    {
-        WWWForm form = new WWWForm();
-
-        form.AddField("user_id", SteamUser.GetSteamID().ToString());
-        form.AddField("deck_index", _deckIndex);
-        form.AddField("deck_name", deckName);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(updateUsersDeckInfoURL, form))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(www.error);
-            }
-            else
-            {
-                // ∏∂¬˘∞°¡ˆ ø°∑Ø ∂ﬂ∏È ¡∂ƒ°«“ºˆ ¿÷∞‘ «ÿæﬂ«‘
-                Debug.Log(www.downloadHandler.text);
-            }
-        }
-    }
 
 
-    // Ω««‡ æ»µ«¥¬ «‘ºˆ 
-    // «ˆ¡˙ ø‰º“∂ßπÆø° «ÿ≥˘¥¬µ• «ˆ¡˙ ø‰º“∏¶ ±∏«ˆ æ∆øπ æ»«ÿ≥˘¿Ω php queryπÆ ∫Œ≈Õ º’∫¡æﬂ«‘
-    // ¬¸∞ÌøµªÛ
     // https://www.youtube.com/watch?v=3K9_S6RPHYA&list=PLTm4FjoXO7nfn0jB0Ig6UbZU1pUHSLhRU&index=14 
     public IEnumerator SellItem(string _itemID, string _userID)
     {

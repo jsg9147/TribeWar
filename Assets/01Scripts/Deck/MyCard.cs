@@ -6,7 +6,6 @@ using TMPro;
 
 public class MyCard : MonoBehaviour
 {
-    // ¾È¾¸
     [SerializeField] Image cardImage;
     [SerializeField] TMP_Text cardCost;
     [SerializeField] TMP_Text cardTitle;

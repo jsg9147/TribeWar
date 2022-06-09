@@ -7,6 +7,7 @@ public class InGameUIControl : MonoBehaviour
 {
     public GameObject leftLayoutUI;
     public GameObject rightLayoutUI;
+    public GameObject Deck_Panel;
 
     bool left_UI_On = false;
     bool right_UI_On = false;
@@ -41,5 +42,10 @@ public class InGameUIControl : MonoBehaviour
             rightLayoutUI.GetComponent<RectTransform>().anchoredPosition = new Vector2(rightLayoutUI.GetComponent<RectTransform>().anchoredPosition.x - width, 0);
             right_UI_On = true;
         }
+    }
+
+    public void Deck_Screen_On()
+    {
+        Deck_Panel.SetActive(!Deck_Panel.activeSelf);
     }
 }

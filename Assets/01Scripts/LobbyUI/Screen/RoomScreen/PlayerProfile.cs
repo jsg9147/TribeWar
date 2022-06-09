@@ -21,12 +21,12 @@ public class PlayerProfile : MonoBehaviour
             winRateStr = "0.00";
 
         username_Text.text = steamName;
-        playerRecord_Text.text = (int)win + "승 " + (int)lose + "패 ( " + winRateStr + " % )"; // web에서 정보 가져오는 쿼리 해놔야함
+        playerRecord_Text.text = (int)win + "W " + (int)lose + "L ( " + winRateStr + " % )";
 
         Texture2D steamAvatar = GetSteamImageAsTexture2D(iImage);
 
         if (hasAuthority)
-            background.color = new Color(0.8f,0.5f,0.2f,1);
+            background.color = new Color(0.8f, 0.5f, 0.2f, 1);
 
         if (steamAvatar != null)
         {

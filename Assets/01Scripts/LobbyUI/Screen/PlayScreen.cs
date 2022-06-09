@@ -28,7 +28,26 @@ public class PlayScreen : MonoBehaviour
 
     private void OnDisable()
     {
-        
+        Destroy_Deck_List();
+    }
+
+    void Destroy_Deck_List()
+    {
+        GameObject[] allChildren = new GameObject[deckListContent.transform.childCount];
+
+        int i = 0;
+
+        foreach (Transform child in deckListContent.transform)
+        {
+            allChildren[i] = child.gameObject;
+            i++;
+        }
+
+        foreach (GameObject child in allChildren)
+        {
+            DestroyImmediate(child.gameObject);
+        }
+
     }
 
     void PlayerProfileUpdate()
@@ -39,7 +58,7 @@ public class PlayScreen : MonoBehaviour
             winRateStr = "0.00";
 
         username_Text.text = SteamFriends.GetPersonaName();
-        playerRecord_Text.text = web.win + "½Â " + web.lose +  "ÆÐ\n( " + winRateStr + " % )"; // web¿¡¼­ Á¤º¸ °¡Á®¿À´Â Äõ¸® ÇØ³ö¾ßÇÔ
+        playerRecord_Text.text = web.win + "ìŠ¹ " + web.lose + "íŒ¨\n( " + winRateStr + " % )";
         Texture2D steamAvatar = GetSteamImageAsTexture2D(SteamFriends.GetMediumFriendAvatar(SteamUser.GetSteamID()));
 
         Rect rect = new Rect(0, 0, steamAvatar.width, steamAvatar.height);
@@ -63,7 +82,7 @@ public class PlayScreen : MonoBehaviour
             {
                 ret = new Texture2D((int)ImageWidth, (int)ImageHeight, TextureFormat.RGBA32, false, false);
                 ret.LoadRawTextureData(Image);
-                
+
                 ret.Apply();
             }
         }

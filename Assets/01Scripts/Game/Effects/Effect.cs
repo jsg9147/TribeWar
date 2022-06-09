@@ -11,80 +11,58 @@ public abstract class Effect
     /// <param name="target">The target type of the effect.</param>
     /// <returns>True if there are any targets available for this effect; false otherwise.</returns>
     /// 
+    public int value;
+    public int duration;
+    public EffectClass effectClass;
 
-    // 게임 상태에 대한 정의 추가해야함. 상대턴인가, 전투중인가 등등
     public virtual bool AreTargetsAvailable(Card sourceCard, Target target)
+    {
+        return true;
+    }
+    public virtual bool AreTargetsAvailable(Card tributeCard, Card targetCard)
     {
         return true;
     }
     public virtual void Resolve(Entity entity)
     {
     }
-    // 죽었을때 효과 무효화 시키려고 만듬
+
     public virtual void Reverse(Entity entity)
     {
 
     }
+
+    public virtual void Resolve(SingleEntity entity)
+    {
+
+    }
+
+    public virtual void Reverse(SingleEntity entity)
+    {
+
+    }
+
+    public virtual void Resolve(EntityManager entityManager, Card card, bool isMine)
+    {
+
+    }
+
+    public virtual void Resolve(EntityManager entityManager, Entity entity, Tile targetTile)
+    {
+    
+    }
 }
 
 public abstract class CardBaseEffect : Effect
-{
-
+{   
     public virtual void Resolve(Card card)
     {
-    }
 
-}
-
-
-/// <summary>
-/// The base class for effects that target players.
-/// </summary>
-public abstract class PlayerBaseEffect : Effect
-{        
-    /// <summary>
-    /// Resolves this effect on the specified player.
-    /// </summary>
-    /// <param name="state">The game's state.</param>
-    /// <param name="player">The player on which to resolve this effect.</param>
-    public virtual void Resolve(UserInfo player)
-    {
-
-    }
-
-    public override bool AreTargetsAvailable(Card sourceCard, Target target)
-    {
-        switch(target.GetTarget())
-        {
-            case EffectTarget.Player:
-                break;
-
-            case EffectTarget.Opponent:
-                break;
-
-            case EffectTarget.TargetPlayer:
-                break;
-
-            case EffectTarget.RandomPlayer:
-                break;
-
-            case EffectTarget.AllPlayers:
-                break;
-
-            default:
-                break;
-        }
-        return base.AreTargetsAvailable(sourceCard, target);
     }
 }
 
-
-/// <summary>
-/// The base class for card effects.
-/// </summary>
 public abstract class CardEffect : CardBaseEffect
 {
-    // 효과에 따라 내 카드 또는 상대 카드를 추가해서 그 효과를 적용받게 만들어야함
     public override bool AreTargetsAvailable(Card sourceCard, Target target)
     {
         switch (target.GetTarget())
@@ -95,7 +73,7 @@ public abstract class CardEffect : CardBaseEffect
             case EffectTarget.PlayerCard:
                 break;
 
-            case EffectTarget.OpponentCard:
+            case EffectTarget.EnermyCard:
                 break;
 
             case EffectTarget.TargetCard:
@@ -115,11 +93,17 @@ public abstract class CardEffect : CardBaseEffect
 
             case EffectTarget.AllCards:
                 break;
-
+            case EffectTarget.Player:
+                break;
             default:
                 break;
         }
         return base.AreTargetsAvailable(sourceCard, target);
+    }
+
+    public virtual void SetStatID(string stat_name)
+    {
+
     }
 }
 
@@ -131,12 +115,16 @@ public abstract class CardStatEffect : CardEffect
     /// </summary>
     public int statID;
 
-    public void SetStatID(string statName)
+    public override void SetStatID(string stat_name)
     {
-        if (statName == "attack")
+        if (stat_name == "bp")
             statID = 0;
-        else if (statName == "defense")
+        else if (stat_name == "attack")
             statID = 1;
+        else if (stat_name == "defense")
+            statID = 2;
+        else
+            return;
     }
 }
 
@@ -146,4 +134,33 @@ public abstract class CardDestroyEffect : CardEffect
     /// The Card destroy
     /// </summary>
     public int cardIndex;
+}
+
+public abstract class SummonCountEffect : CardEffect
+{
+    public int count;
+    public Tribe targetTribe;
+}
+
+public abstract class MoveEffect : CardEffect
+{
+    public Coordinate moveCoord;
+
+}
+
+public abstract class TributeBaseEffect : CardEffect
+{
+    public Tribe targetTribe;
+}
+
+public abstract class ControllEffect : CardEffect
+{
+    public EntityBelong originBelong;
+    public int turn;
+}
+
+public abstract class TypeChange : CardEffect
+{
+    public AttackType originType;
+    public AttackType changeType;
 }

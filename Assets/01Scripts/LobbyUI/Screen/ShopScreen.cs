@@ -11,11 +11,18 @@ public class ShopScreen : MonoBehaviour
 
     Dictionary<string, string> packInfo;
 
-    [Header("�̱�â")]
     public GameObject drawCastScreen;
     public Transform card_Layout_group;
 
+    public GameObject[] SlotObject;
+    Vector3[] slotOriginPos;
+
     private void Start()
+    {
+        slotOriginPos = new Vector3[SlotObject.Length];
+
+    }
+    void Update()
     {
 
     }
@@ -27,8 +34,9 @@ public class ShopScreen : MonoBehaviour
 
     void Pack_Data_Setup()
     {
+        packInfo = new Dictionary<string, string>();
         this.packInfo = WebMain.instance.web.packInfo;
-        foreach(var pack in packInfo.Keys)
+        foreach (var pack in packInfo.Keys)
         {
             CardPackBuy cardPackBuy = Instantiate(cardPackPrefab, shopContent);
             cardPackBuy.transform.localScale = Vector3.one;
@@ -41,10 +49,18 @@ public class ShopScreen : MonoBehaviour
     public void DrawScreen_On()
     {
         drawCastScreen.transform.DOScale(Vector3.one, 1);
+        for (int i = 0; i < slotOriginPos.Length; i++)
+        {
+            slotOriginPos[i] = SlotObject[i].transform.localPosition;
+        }
     }
 
     public void DrawScreen_Off()
     {
+        for (int i = 0; i < slotOriginPos.Length; i++)
+        {
+            SlotObject[i].transform.localPosition = slotOriginPos[i];
+        }
         drawCastScreen.transform.DOKill();
         drawCastScreen.transform.localScale = Vector3.zero;
         DrawReset();
@@ -63,4 +79,31 @@ public class ShopScreen : MonoBehaviour
             }
         }
     }
+
+
+    public IEnumerator StartSlot(int SlotIndex, int cycle, int index) // 변수로 바퀴수, 인덱스 추가해서
+    {
+        Vector3 slotPos = SlotObject[SlotIndex].transform.localPosition;
+        Vector3 destinationPos = slotPos + new Vector3(0, -250 * index);
+
+        float randSpeed = Random.Range(0.002f, 0.005f);
+        for (int i = 0; i < 223 * cycle; i++) // 
+        {
+            SlotObject[SlotIndex].transform.localPosition -= new Vector3(0, 10f, 0);
+            if (SlotObject[SlotIndex].transform.localPosition.y <= -2110f)
+            {
+                SlotObject[SlotIndex].transform.localPosition = slotPos;
+            }
+            yield return new WaitForSeconds(randSpeed);
+        }
+        SlotObject[SlotIndex].transform.localPosition = slotPos + new Vector3(0, 40);
+
+        SlotObject[SlotIndex].transform.DOLocalMove(destinationPos, 1f).SetEase(Ease.Linear);
+    }
+
+    // 10개 카드 랜덤으로 띄우고
+    // 뽑힌 카드 위치의 인덱스를 받고
+    // 랜덤하게 몇바퀴 이상에서 멈추게 하고 그 위치에서 멈추게 만든다.
+    // 시작점을 당첨카드로 놓고 돌리는 바퀴수를 랜덤에 시간도 랜덤으로 한다..
+    // 한바퀴는 온전히 돌리고 마지막 바퀴에서 반복문을 나와서 그 인덱스의 좌표로 이동
 }

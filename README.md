@@ -1,2 +1,2 @@
-# DiceCardGame
+# Tribe Game
 My first game

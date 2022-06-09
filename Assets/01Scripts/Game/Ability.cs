@@ -10,24 +10,18 @@ using UnityEngine;
 /// </summary>
 public class Ability
 {
-    public EffectClass effect_Class; // 효과 발동 분류
+    public EffectTime effect_Time = EffectTime.None;
 
-    public string Tag;
+    public string Tag = "";
 
-    /// <summary>
-    /// The effect of this ability.
-    /// </summary>
-    public Effect effect;
-
-    /// <summary>
-    /// The target of this ability.
-    /// </summary>
+    public List<Effect> effects = new List<Effect>();
     public Target target;
-    const string BattlePower = "BP";
+
+    public string targetID = "";
 
     public void SetEffectSubject(string effectTargetStr)
     {
-        switch(effectTargetStr)
+        switch (effectTargetStr)
         {
             case "target":
                 target = new TargetCard();
@@ -47,116 +41,135 @@ public class Ability
             case "tribe_target":
                 target = new TribeTarget();
                 break;
+            case "target_warrior":
+                target = new TribeTarget();
+                break;
+            case "player":
+                target = new PlayerTarget();
+                break;
             default:
                 target = new NoneEffect();
                 break;
         }
     }
 
-    public void SetAbility(string effect_Str, string effect_subject_Str)
+    public void SetAbility(string card_id, string effect_List_Str, string effect_subject_Str)
     {
-        SetEffect(effect_Str);
+        if (effect_List_Str == null)
+            return;
+
+        string[] effectStrArray = effect_List_Str.Split('/');
+
+        foreach (var effect_Str in effectStrArray)
+        {
+            SetEffect(card_id, effect_Str);
+        }
         SetEffectSubject(effect_subject_Str);
     }
 
-    public void SetEffect(string effectStr)
+    public void SetEffect(string card_id, string effectStr)
     {
-        if (effectStr == null)
+        if (effectStr == null || effectStr.Split('.')[0] == "")
             return;
 
         Tag = effectStr;
-        int value, duration;
-        if(effectStr.Contains("/"))
-        {
-            value = Int32.Parse(effectStr.Split('/')[1]);
-            duration = Int32.Parse(effectStr.Split('/')[2]);
-        }
-        else
-        {
-            value = 0;
-            duration = 0;
-        }
-        switch (effectStr.Split('/')[0])
+
+        switch (effectStr.Split('.')[0])
         {
             case "destroy":
-                effect = new DestroyCardEntityEffect();
+                effects.Add(new DestroyCardEntityEffect());
                 break;
             case "increase":
                 var increaseCardStatEffect = new IncreaseCardStatEffect();
-                increaseCardStatEffect.SetStatID(BattlePower);
-                increaseCardStatEffect.value = value;
-                increaseCardStatEffect.duration = duration;
-                effect = increaseCardStatEffect;
+                increaseCardStatEffect.effectClass = EffectClass.increase;
+                increaseCardStatEffect.SetStatID(effectStr.Split('.')[1]);
+                increaseCardStatEffect.value = Int32.Parse(effectStr.Split('.')[2]); ;
+                increaseCardStatEffect.duration = Int32.Parse(effectStr.Split('.')[3]); ;
+                effects.Add(increaseCardStatEffect);
                 break;
             case "decrease":
                 var decreaseCardStatEffect = new DecreaseCardStatEffect();
-                decreaseCardStatEffect.SetStatID(BattlePower);
-                decreaseCardStatEffect.value = value;
-                decreaseCardStatEffect.duration = duration;
-                effect = decreaseCardStatEffect;
+                decreaseCardStatEffect.effectClass = EffectClass.decrease;
+                decreaseCardStatEffect.SetStatID(effectStr.Split('.')[1]);
+                decreaseCardStatEffect.value = Int32.Parse(effectStr.Split('.')[2]); ;
+                decreaseCardStatEffect.duration = Int32.Parse(effectStr.Split('.')[3]); ;
+                effects.Add(decreaseCardStatEffect);
                 break;
-            case "decrese_damage":
+            case "summon":
+                var summonCountEffect = new SummonCountControl();
+                summonCountEffect.effectClass = EffectClass.summon;
+                summonCountEffect.count = Int32.Parse(effectStr.Split('.')[2]); ;
+                effects.Add(summonCountEffect);
                 break;
-            case "increase_damage":
+
+            case "move":
+                var monsterMoveEffect = new MonsterMoveEffect();
+                monsterMoveEffect.effectClass = EffectClass.move;
+                effects.Add(monsterMoveEffect);
+                monsterMoveEffect.value = Int32.Parse(effectStr.Split('.')[1]);
+                break;
+
+            case "targetTribute":
+                var targetTributeEffect = new TargetTributeEffect();
+                targetTributeEffect.effectClass = EffectClass.targetTribute;
+                targetID = effectStr.Split('.')[1];
+                targetTributeEffect.value = Int32.Parse(effectStr.Split('.')[2]);
+                effects.Add(targetTributeEffect);
+                break;
+
+            case "tribute":
+                var tributeEffect = new TirbuteEffect();
+                tributeEffect.effectClass = EffectClass.tribute;
+                tributeEffect.value = Int32.Parse(effectStr.Split('.')[1]);
+                effects.Add(tributeEffect);
+                break;
+
+            case "control":
+                var targetControl = new ControlLossEffect();
+                targetControl.effectClass = EffectClass.control;
+                targetControl.value = Int32.Parse(effectStr.Split('.')[2]);
+                effects.Add(targetControl);
+                break;
+
+            case "type":
+                var typeChange = new AttackTypeEffect();
+                typeChange.SetChangeType(effectStr.Split('.')[1]);
+                typeChange.value = Int32.Parse(effectStr.Split('.')[2]);
+                effects.Add(typeChange);
+                break;
+                
+            default:
                 break;
         }
-
-        
     }
 }
-
-/// <summary>
-/// Triggered abilities are abilities that get resolved when their
-/// associated trigger takes place.
-/// </summary>
 public class TriggerAbility : Ability
 {
-    /// <summary>
-    /// The trigger of this ability.
-    /// </summary>
-    // public Trigger trigger; // 카드 효과 세분화로 추정
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
     public TriggerAbility()
     {
-        effect_Class = EffectClass.Triggered;
+        effect_Time = EffectTime.Triggered;
     }
 }
-
-/// <summary>
-/// Activated abilities are abilities that get resolved when the player
-/// pays a cost/s.
-/// </summary>
 public class ActivateAbility : Ability
 {
-    /// <summary>
-    /// The costs of this ability.
-    /// </summary>
-    // public List<Cost> costs = new List<Cost>(); // 추후에 마법카드 발동 조건때문에 추가될듯
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
     public ActivateAbility()
     {
-        effect_Class = EffectClass.Activated;
+        effect_Time = EffectTime.Activated;
     }
 }
 
 public class BattleAbility : Ability
 {
-    /// <summary>
-    /// The costs of this ability.
-    /// </summary>
-    // public List<Cost> costs = new List<Cost>(); // 추후에 마법카드 발동 조건때문에 추가될듯
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
     public BattleAbility()
     {
-        effect_Class = EffectClass.Battle;
+        effect_Time = EffectTime.Battle;
+    }
+}
+
+public class TributeAbility : Ability
+{
+    public TributeAbility()
+    {
+        effect_Time = EffectTime.Tribute;
     }
 }

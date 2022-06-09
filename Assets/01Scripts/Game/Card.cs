@@ -12,7 +12,7 @@ using System.Linq;
 /// </summary>
 public class Card
 {
-    public string card_code; // 이거를 이용해서 카드 위치를 찾는게 좋을듯
+    public string id; // 이거를 이용해서 카드 위치를 찾는게 좋을듯
     public string name; // 카드 이름
     public CardType cardType = new CardType(); // 카드 타입, 몬스터, 마법, 함정이 있고 moveType 이 들어있음
 
@@ -22,7 +22,7 @@ public class Card
 
     public int cost;
     public string card_text;
-    public CardRole role;
+    public AttackType role;
 
     public Sprite sprite;
 
@@ -33,36 +33,60 @@ public class Card
     #region Setup
     public Card(JSONNode cardData)
     {
-        this.card_code = cardData["card_id"];
+        this.id = cardData["id"];
         this.name = cardData["name"];
         this.cost = cardData["cost"];
         this.card_text = cardData["text"];
 
-        Set_CardRole(cardData["role"]);
+        string effectStr = cardData["effect"];
+        string effect_target_Str = cardData["effect_target"];
+
+        if (effectStr == null)
+            effectStr = "";
+        if (effect_target_Str == null)
+            effect_target_Str = "";
+        Set_CardRole(cardData["type"]);
         cardType.SetCardType(cardData);
 
-        if (cardData["effect_class"] == "triggered")
-            ability = new TriggerAbility();
-        else if (cardData["effect_class"] == "activated")
-            ability = new ActivateAbility();
-        else if (cardData["effect_class"] == "battle")
-            ability = new BattleAbility();
-        else
-            ability = new Ability();
+        Ability_Init(cardData["effect_time"]);
 
-        ability.SetAbility(cardData["effect"], cardData["effect_subject"]);
+        ability.SetAbility(id, effectStr, effect_target_Str);
 
         if (cardType.card_category == CardCategory.Monster)
         {
-            SetStat("BP", cardData["battle_power"]);
+            SetStat("bp", cardData["battle_power"]);
         }
 
-        sprite = Resources.Load<Sprite>("Images/Card/" + card_code);
+        sprite = Resources.Load<Sprite>("Images/Card/" + id);
     }
+
+    void Ability_Init(string effect_time)
+    {
+        switch (effect_time)
+        {
+            case "trigger":
+                ability = new TriggerAbility();
+                break;
+            case "active":
+                ability = new ActivateAbility();
+                break;
+            case "battle":
+                ability = new BattleAbility();
+                break;
+            case "tribute":
+            case "targetTribute":
+                ability = new TributeAbility();
+                break;
+            default:
+                ability = new Ability();
+                break;
+        }
+    }
+
 
     public Card(Card copyCard)
     {
-        this.card_code = copyCard.card_code;
+        this.id = copyCard.id;
         this.name = copyCard.name;
         this.cost = copyCard.cost;
         this.card_text = copyCard.card_text;
@@ -80,7 +104,7 @@ public class Card
 
         if (cardType.card_category == CardCategory.Monster)
         {
-            SetStat("BP", copyCard.GetBaseStat("BP"));
+            SetStat("bp", copyCard.GetBaseStat("bp"));
         }
     }
 
@@ -123,10 +147,10 @@ public class Card
         switch (role_Str)
         {
             case "melee":
-                this.role = CardRole.melee;
+                this.cardType.attack_type = AttackType.melee;
                 break;
             case "shooter":
-                this.role = CardRole.shooter;
+                this.cardType.attack_type = AttackType.shooter;
                 break;
         }
     }
@@ -134,12 +158,12 @@ public class Card
     public string Role_Str()
     {
         string role_Str;
-        switch (cardType.role)
+        switch (cardType.attack_type)
         {
-            case CardRole.melee:
+            case AttackType.melee:
                 role_Str = "일반";
                 break;
-            case CardRole.shooter:
+            case AttackType.shooter:
                 role_Str = "원거리";
                 break;
 
@@ -182,14 +206,14 @@ public class Card
 
     public void Add_Modifier(Modifier modifier)
     {
-        stats.Find(x => x.name == "BP").AddModifier(modifier);
+        stats.Find(x => x.name == "bp").AddModifier(modifier);
     }
 
     #endregion
 
     public void onTurnEnd()
     {
-        foreach(var stat in stats)
+        foreach (var stat in stats)
         {
             stat.OnEndTurn();
         }

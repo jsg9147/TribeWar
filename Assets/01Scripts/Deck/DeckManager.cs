@@ -6,10 +6,11 @@ using UnityEngine.UI;
 public class DeckManager : MonoBehaviour
 {
     public Web web;
-    [SerializeField] DeckEditor deckEditorManager;
-    [SerializeField] GameObject deckSelectionContent;
     [SerializeField] GameObject match_Deck_Select_Content;
     [SerializeField] GameObject deckSelectPrefab;
+
+    [SerializeField] Transform addDeckButton; // Îç± Î¶¨Ïä§Ìä∏ ÏóÖÎç∞Ïù¥Ìä∏Ïãú ÌååÍ¥¥ Î∞©ÏßÄÏö©
+    [SerializeField] GameObject myDeckList_Content; // Ï¥àÍ∏∞Ìôî ÏãúÌÇ¨ Î∞©Î≤ïÏù¥ ÏïàÎñ†Ïò¨Îùº ÏÇ¨Ïö©
 
     public GameObject myDeckPrefab;
     public GameObject myDeckEditPrefab;
@@ -20,7 +21,6 @@ public class DeckManager : MonoBehaviour
 
     List<DeckSelection> deckList = new List<DeckSelection>();
 
-    // µ¶ ¥Î«•ƒ´µÂ ƒı∏Æ ¬•≥÷æÓæﬂ«‘
     public void MyDeckListUpdate(GameObject myDeckContent, bool _EditMyDeck)
     {
         GameObject deckPrefab = _EditMyDeck ? myDeckEditPrefab : myDeckPrefab;
@@ -30,7 +30,8 @@ public class DeckManager : MonoBehaviour
 
         foreach (Transform child in myDeckContent.transform)
         {
-            Destroy(child.gameObject);
+            if (child != addDeckButton)
+                Destroy(child.gameObject);
         }
 
         myDeckList = new List<MyDeck>();
@@ -38,7 +39,7 @@ public class DeckManager : MonoBehaviour
 
         foreach (Deck deck in deckList)
         {
-            if(_EditMyDeck)
+            if (_EditMyDeck)
             {
                 EditMyDeckCreate(myDeckContent, deck);
                 myDeckContent.GetComponent<FlexibleGrid>().SetFlexibleGrid();
@@ -50,7 +51,7 @@ public class DeckManager : MonoBehaviour
                 matchButton.interactable = !(web.selected_Deck == null);
             }
         }
-        
+
     }
 
     void MyDeckCreate(GameObject myDeckContent, Deck deck)
@@ -91,33 +92,13 @@ public class DeckManager : MonoBehaviour
         {
             LobbyUI.instance.SelectEditMyDeck(deck);
         });
-    }
 
-    // πÿ¿∏∑Œ¥¬ ¥Ÿ æ»æ≤¥¬ ƒ⁄µÂ
-
-    public void DeckEditorListUpdate()
-    {
-        List<Deck> deckList = WebMain.instance.web.myDeckList;
-        foreach (Deck deck in deckList)
+        myDeck.deleteButton.GetComponent<Button>().onClick.AddListener(() =>
         {
-            var deckSelectButton = Instantiate(deckSelectPrefab, deckSelectionContent.transform);
-            deckSelectButton.GetComponent<DeckSelection>().DeckInfoSet(deck.index, deck.title);
-
-            deckSelectButton.GetComponent<DeckSelection>().IsMatchWindow(false);
-
-            this.deckList.Add(deckSelectButton.GetComponent<DeckSelection>());
-
-            deckSelectButton.GetComponent<Button>().onClick.AddListener(() =>
-            {
-                deckEditorManager.init();
-            });
-            deckSelectButton.GetComponent<DeckSelection>().deleteButton.onClick.AddListener(() =>
-            {
-                StartCoroutine(WebMain.instance.web.DeleteDeck(deck.index.ToString()));
-                this.deckList.Remove(deckSelectButton.GetComponent<DeckSelection>());
-                DestroyImmediate(deckSelectButton);
-            });
-        }
+            StartCoroutine(WebMain.instance.web.DeleteDeck(deck.index.ToString()));
+            WebMain.instance.web.myDeckList.Remove(deck);
+            MyDeckListUpdate(myDeckList_Content, true);
+        });
     }
 
     public void Match_Deck_Select_List_Update()
@@ -127,11 +108,10 @@ public class DeckManager : MonoBehaviour
         foreach (Deck deck in deckList)
         {
             var deckSelectButton = Instantiate(deckSelectPrefab, match_Deck_Select_Content.transform);
-            deckSelectButton.GetComponent<DeckSelection>().DeckInfoSet(deck.index, deck.title);
+            deckSelectButton.GetComponent<DeckSelection>().DeckInfoSet(deck.index, deck.name);
             deckSelectButton.GetComponent<DeckSelection>().IsMatchWindow(true);
             this.deckList.Add(deckSelectButton.GetComponent<DeckSelection>());
-            
-            // µ¶ º±≈√ πˆ∆∞ø° ±‚¥… √ﬂ∞°
+
             deckSelectButton.GetComponent<Button>().onClick.AddListener(() =>
             {
                 Selected_Image_SetActive(deckSelectButton.GetComponent<DeckSelection>().deck);
@@ -140,7 +120,7 @@ public class DeckManager : MonoBehaviour
             });
         }
 
-        if(this.deckList.Count > 0)
+        if (this.deckList.Count > 0)
         {
             Deck recently_Deck = this.deckList.Find(x => x.deck.index == WebMain.instance.web.recentlyDeckIndex)?.deck;
             if (recently_Deck == null)
@@ -148,15 +128,15 @@ public class DeckManager : MonoBehaviour
             Selected_Image_SetActive(recently_Deck);
             WebMain.instance.web.selected_Deck = recently_Deck;
         }
-        
+
         matchButton.interactable = select;
     }
 
     void Selected_Image_SetActive(Deck selected_Deck)
     {
-        foreach(var deck in deckList)
+        foreach (var deck in deckList)
         {
-            if(selected_Deck.index == deck.deck.index)
+            if (selected_Deck.index == deck.deck.index)
             {
                 deck.Selected_This_Deck(true);
                 select = true;
@@ -166,13 +146,13 @@ public class DeckManager : MonoBehaviour
                 deck.Selected_This_Deck(false);
             }
         }
-        
+
         matchButton.interactable = select;
     }
 
     public void DeckListReset()
     {
-        foreach(var deckObjeck in deckList)
+        foreach (var deckObjeck in deckList)
         {
             deckObjeck.DestroySelf();
         }

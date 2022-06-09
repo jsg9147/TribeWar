@@ -18,23 +18,21 @@ public class CollectionCard : MonoBehaviour
     {
         this.card = _card;
         cardCount = count;
-        card_Count_text.text = "¡¿" + count.ToString();
-        cardUI.Setup(card, true, Belong.Collection);
+        card_Count_text.text = "Ã—" + count.ToString();
+        cardUI.Setup(card);
     }
 
 
     public void CardCountPlus()
     {
         cardCount++;
-        card_Count_text.text = "¡¿" + cardCount.ToString();
-        cardUI.Setup(card, true, Belong.Collection);
+        card_Count_text.text = "Ã—" + cardCount.ToString();
     }
 
     public void CardCountMinus()
     {
         cardCount--;
-        card_Count_text.text = "¡¿" + cardCount.ToString();
-        cardUI.Setup(card, true, Belong.Collection);
+        card_Count_text.text = "Ã—" + cardCount.ToString();
     }
 
     private void OnDestroy()

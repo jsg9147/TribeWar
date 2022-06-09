@@ -14,7 +14,7 @@ public class CardPackBuy : MonoBehaviour
 
     public Image background;
     public Image pack_Image;
-    
+
     public TMP_Text nameText;
 
     public int card_Count;
@@ -24,6 +24,12 @@ public class CardPackBuy : MonoBehaviour
     public float unique_Importance;
 
     float all_Importance;
+
+    public class CardSlot
+    {
+        public List<Card> slot = new List<Card>();
+    }
+    public CardSlot[] displaySlot;
 
     public void Pack_Setup(CardPack pack, string pack_name, ShopScreen _shop)
     {
@@ -38,20 +44,20 @@ public class CardPackBuy : MonoBehaviour
 
     public List<int> Random_One_Pack()
     {
-        List<int> cards = new List<int>(); 
+        List<int> cards = new List<int>();
 
-        for(int i = 0; i < card_Count; i++)
+        for (int i = 0; i < card_Count; i++)
         {
             float random_importance = Random.Range(0f, all_Importance);
             if (random_importance < nomal_Importance)
             {
                 cards.Add(cardPack.GetRandomNomal());
             }
-            else if(random_importance > nomal_Importance && random_importance < nomal_Importance + rare_Importance)
+            else if (random_importance > nomal_Importance && random_importance < nomal_Importance + rare_Importance)
             {
                 cards.Add(cardPack.GetRandomRare());
             }
-            else if(random_importance < nomal_Importance + rare_Importance + unique_Importance && random_importance > nomal_Importance + rare_Importance)
+            else if (random_importance < nomal_Importance + rare_Importance + unique_Importance && random_importance > nomal_Importance + rare_Importance)
             {
                 cards.Add(cardPack.GetRandomUnique());
             }
@@ -60,19 +66,47 @@ public class CardPackBuy : MonoBehaviour
         return cards;
     }
 
-    // 지금 카드 1팩 구매 버튼에 할당중
     public void DrawCastPack()
     {
         shopScreen.DrawScreen_On();
         List<int> pack = Random_One_Pack();
-        foreach(int card_number in pack)
+        Dictionary<string, int> cardCount = new Dictionary<string, int>();
+
+        for (int i = 0; i < shopScreen.SlotObject.Length; i++)
         {
-            CardUI cardUI = Instantiate(cardPrefab, shopScreen.card_Layout_group);
+            int randCycle = Random.Range(3, 7);
+            int getIndex = Random.Range(0, 9);
+            CardUI cardUI;
+            Card card;
+            for (int j = 0; j < 10; j++)
+            {
+                if (j == getIndex)
+                {
+                    cardUI = Instantiate(cardPrefab, shopScreen.SlotObject[i].transform);
+                    card = GetCard(pack[i]);
+                    cardUI.Setup(card, true);
+                    if (cardCount.ContainsKey(card.id))
+                    {
+                        cardCount[card.id] = cardCount[card.id] + 1;
+                    }
+                    else
+                    {
+                        cardCount.Add(card.id, 1);
+                    }
+                }
+                else
+                {
+                    CardUI tempCard = Instantiate(cardPrefab, shopScreen.SlotObject[i].transform);
+                    tempCard.Setup(GetRandom_Recorded_Card());
+                }
 
-            Card card = GetCard(card_number);
-            cardUI.Setup(card, true, Belong.Draw);
+            }
+            StartCoroutine(shopScreen.StartSlot(i, randCycle, getIndex));
+        }
 
-            StartCoroutine(WebMain.instance.web.Set_Buy_Card(card.card_code));
+        foreach (string card_id in cardCount.Keys)
+        {
+            StartCoroutine(WebMain.instance.web.Set_Buy_Card(card_id, cardCount[card_id]));
         }
     }
 
@@ -85,8 +119,13 @@ public class CardPackBuy : MonoBehaviour
         return CardDatabase.instance.CardData(card_code);
     }
 
-    public void Buy_Ten_Pack()
+    Card GetRandom_Recorded_Card()
     {
+        int random = Random.Range(1, card_Count);
+        string card_code;
+        string card_numStr = string.Format("{0:D3}", random);
 
+        card_code = cardPack.GetPackCode() + "-" + card_numStr;
+        return CardDatabase.instance.CardData(card_code);
     }
 }
