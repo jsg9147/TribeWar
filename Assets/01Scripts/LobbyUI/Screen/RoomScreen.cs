@@ -1,12 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class RoomScreen : MonoBehaviour
 {
     [SerializeField] private GameObject deckListContent;
     [SerializeField] private GameObject ChatContent;
     [SerializeField] private TMPro.TMP_Text readyButtonText;
+
+    public TMP_Text player_Text;
+    public TMP_Text chatInput_Text;
+    public TMP_Text send_Text;
+    public TMP_Text inviteCode_Text;
+    public TMP_Text ready_Text;
+    public TMP_Text exit_Text;
 
     public DeckManager deckManager;
 
@@ -45,5 +53,41 @@ public class RoomScreen : MonoBehaviour
             readyButtonText.text = "준비 해제";
         else
             readyButtonText.text = "준 비";
+    }
+
+    public void ChangeButtonLanguage()
+    {
+        LocalizationData localizationData = LocalizationManager.instance.Read("LocalizationData/UIText");
+
+        for (int i = 0; i < localizationData.items.Count; i++)
+        {
+            if (localizationData.items[i].tag == "Player")
+            {
+                player_Text.text = localizationData.items[i].value;
+            }
+            if (localizationData.items[i].tag == "ChatInput")
+            {
+                chatInput_Text.text = localizationData.items[i].value;
+            }
+            if (localizationData.items[i].tag == "Send")
+            {
+                send_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "Exit")
+            {
+                exit_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "InviteCode")
+            {
+                inviteCode_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "Ready")
+            {
+                ready_Text.text = localizationData.items[i].value;
+            }
+        }
     }
 }

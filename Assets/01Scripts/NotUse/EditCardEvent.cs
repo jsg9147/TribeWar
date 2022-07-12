@@ -40,9 +40,11 @@ public class EditCardEvent : MonoBehaviour, IPointerClickHandler
             if (inCollector)
             {
                 DeckEditor.instance.Card_Add_In_My_EditDeck(collectionCard);
+                DarkTonic.MasterAudio.MasterAudio.PlaySound("AddCard");
             }
             else
             {
+                DarkTonic.MasterAudio.MasterAudio.PlaySound("RemoveCard");
                 DeckEditor.instance.Remove_Card_Of_Deck(cardUI);
             }
         }

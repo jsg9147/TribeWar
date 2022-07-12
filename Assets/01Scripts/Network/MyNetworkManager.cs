@@ -8,19 +8,8 @@ using UnityEngine.SceneManagement;
 public class MyNetworkManager : NetworkManager
 {
     [SerializeField] private GamePlayer gamePlayerPrefab;
-    [SerializeField] public GameObject playerSlotObject;
     [SerializeField] public int minPlayers;
-    // int minPlayers
-    // {
-    //     get
-    //     {
-    //         return _minPlayers - 1;
-    //     }
-    //     set
-    //     {
-    //         _minPlayers = value + 1;
-    //     }
-    // }
+
     public List<GamePlayer> GamePlayers { get; } = new List<GamePlayer>();
 
     public bool quickMatch = false;
@@ -73,7 +62,6 @@ public class MyNetworkManager : NetworkManager
     {
         if (CanStartGame())
         {
-            StartCoroutine(GameManager.instance.LoadingComplite());
             if (NetworkRpcFunc.instance != null)
                 NetworkRpcFunc.instance.RpcLoadingComplite();
         }
@@ -97,31 +85,32 @@ public class MyNetworkManager : NetworkManager
     [ContextMenu("Start Game")]
     public void StartGame()
     {
-        LobbyUI.instance.MatchSuccess();
         StartCoroutine(GameStart());
     }
 
     IEnumerator GameStart()
     {
         yield return new WaitForSeconds(1f);
+        
         if (SceneManager.GetActiveScene().name == "MainMenu")
         {
-            ServerChangeScene("Scene_GamePlay");
+            ServerChangeScene("NetPlay");
         }
     }
 
     private bool CanStartGame()
     {
-        print("Check player loading state");
-
         if (numPlayers < minPlayers)
             return false;
+
+        Debug.Log("Check the game Can Started");
 
         foreach (GamePlayer player in GamePlayers)
         {
             if (!player.isPlayerLoadingComplite)
                 return false;
         }
+
         return true;
     }
 
@@ -140,7 +129,7 @@ public class MyNetworkManager : NetworkManager
 
     public void EndGame()
     {
-        if (SceneManager.GetActiveScene().name == "Scene_GamePlay")
+        if (SceneManager.GetActiveScene().name == "NetPlay")
         {
             StopClient();
             StopHost();

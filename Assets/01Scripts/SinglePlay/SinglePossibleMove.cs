@@ -42,7 +42,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (rightDir.tileState == TileState.onEnermyEntity || rightDir.tileState == TileState.enermyOutpost)
+                if (rightDir.tileState == TileState.onEnermyMonster || rightDir.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(i, CurrentY));
                 }
@@ -67,7 +67,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (leftDir.tileState == TileState.onEnermyEntity || leftDir.tileState == TileState.enermyOutpost)
+                if (leftDir.tileState == TileState.onEnermyMonster || leftDir.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(i, CurrentY));
                 }
@@ -92,7 +92,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (upDir.tileState == TileState.onEnermyEntity || upDir.tileState == TileState.enermyOutpost)
+                if (upDir.tileState == TileState.onEnermyMonster || upDir.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(CurrentX, i));
                 }
@@ -117,7 +117,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (downDir.tileState == TileState.onEnermyEntity || downDir.tileState == TileState.enermyOutpost)
+                if (downDir.tileState == TileState.onEnermyMonster || downDir.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(CurrentX, i));
                 }
@@ -165,7 +165,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (rightUp.tileState == TileState.onEnermyEntity || rightUp.tileState == TileState.enermyOutpost)
+                if (rightUp.tileState == TileState.onEnermyMonster || rightUp.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(i, j));
                 }
@@ -197,7 +197,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (leftUp.tileState == TileState.onEnermyEntity || leftUp.tileState == TileState.enermyOutpost)
+                if (leftUp.tileState == TileState.onEnermyMonster || leftUp.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(i, j));
                 }
@@ -229,7 +229,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (rightDown.tileState == TileState.onEnermyEntity || rightDown.tileState == TileState.enermyOutpost)
+                if (rightDown.tileState == TileState.onEnermyMonster || rightDown.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(i, j));
                 }
@@ -261,7 +261,7 @@ public class SinglePossibleMove
             }
             else
             {
-                if (leftDown.tileState == TileState.onEnermyEntity || leftDown.tileState == TileState.enermyOutpost)
+                if (leftDown.tileState == TileState.onEnermyMonster || leftDown.tileState == TileState.enermyOutpost)
                 {
                     canMovePointList.Add(new Coordinate(i, j));
                 }

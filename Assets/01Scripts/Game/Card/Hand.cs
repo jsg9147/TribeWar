@@ -22,6 +22,7 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     [SerializeField] Image cardImage;
     [SerializeField] Image level_Icon;
 
+    [SerializeField] TMP_Text tribeTextTmp;
     [SerializeField] TMP_Text cardTextTmp;
     [SerializeField] TMP_Text BattlePointTMP;
 
@@ -30,6 +31,8 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     public Card card;
     bool isFront;
     public PRS originPRS;
+
+    public bool clickBlock;
 
     public void Setup(Card card, bool isFront)
     {
@@ -60,16 +63,25 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
                 cardFrame.sprite = MagicFrame;
             }
-            if (cardTextTmp != null)
+            try
+            {
                 cardTextTmp.text = card.card_text.ToString();
-            if (classIcon != null)
                 classIcon.sprite = card.cardType.typeIcon;
-
+                tribeTextTmp.text = tribeStr(card.cardType.tribe);
+            }
+            catch(System.NullReferenceException ex)
+            {
+                Debug.Log(ex);  
+            }
             level_Icon.sprite = Level_Sprite[card.cost];
 
+            clickBlock = false;
         }
         else
         {
+            if (card != null)
+                this.card = card;
+
             cardFrame.sprite = BackFrame;
             classIcon.gameObject.SetActive(false);
             nameTMP.gameObject.SetActive(false);
@@ -77,6 +89,22 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             cardTextTmp.gameObject.SetActive(false);
             BattlePointTMP.gameObject.SetActive(false);
             possible_Effect.SetActive(false);
+
+            clickBlock = true;
+        }
+    }
+    string tribeStr(Tribe tribe)
+    {
+        switch (tribe)
+        {
+            case Tribe.Dragon:
+                return "드래곤";
+            case Tribe.Warrior:
+                return "전사";
+            case Tribe.Magician:
+                return "마법사";
+            default:
+                return "공통";
         }
     }
 
@@ -111,12 +139,16 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         cardFrame.color = changeColor;
     }
 
-    public void Can_Use_Effect(bool isActive) => possible_Effect?.SetActive(isActive);
-
+    public void Can_Use_Effect(bool isActive)
+    {
+        possible_Effect?.SetActive(isActive);
+    }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (GameManager.instance?.clickBlock ?? true)
+            return;
+        if (clickBlock)
             return;
 
         if (isFront)
@@ -136,6 +168,8 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     {
         if (GameManager.instance?.clickBlock ?? true)
             return;
+        if (clickBlock)
+            return;
 
         if (isFront)
         {
@@ -150,12 +184,14 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
     {
         if (GameManager.instance?.clickBlock ?? true)
             return;
+        if (clickBlock)
+            return;
 
         if (isFront)
         {
             if (Input.GetKeyDown(KeyCode.Mouse1))
             {
-                EnlargeCardManager.instance.Setup(this.card, isFront);
+                EnlargeCardManager.instance.Setup(card, isFront);
                 return;
             }
 
@@ -164,12 +200,15 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
 
             changeColor(Color.white);
             modulateAlpha(0.5f);
+            possible_Effect?.SetActive(false);
         }
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         if (GameManager.instance?.clickBlock ?? true)
+            return;
+        if (clickBlock)
             return;
 
         if (isFront)

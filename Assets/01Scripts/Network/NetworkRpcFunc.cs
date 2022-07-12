@@ -18,16 +18,32 @@ public class NetworkRpcFunc : NetworkBehaviour
         instance = this;
     }
 
+    Coordinate SetCoordinate(Vector3 vectorPos, bool server)
+    {
+        Coordinate coordinate = new Coordinate(vectorPos);
+        if (server != isServer)
+        {
+            coordinate.SetReverse(mapManager.mapSize);
+        }
+
+        return coordinate;
+    }
 
     #region Entity Manager
     [ClientRpc]
-    public void RpcCardMove(int entityID, bool targetPlayer, Vector3 movePos, bool server) => EntityManager.instance?.CardMove(entityID, targetPlayer, movePos,server);
+    public void RpcCardMove(int entityID, Vector3 movePos, bool server)
+    {
+        EntityManager.instance?.CardMove(entityID, SetCoordinate(movePos, server), server);
+    }
 
     [ClientRpc]
     public void RpcAttack(int attackerID, int defenderID, bool server) => EntityManager.instance?.Attack(attackerID, defenderID, server);
 
     [ClientRpc]
-    public void RpcOutpostAttack(int attackerID, Coordinate outpostCoord, bool server) => EntityManager.instance?.OutpostAttack(attackerID, outpostCoord, server);
+    public void RpcOutpostAttack(int attackerID, Vector3 outpostPos, bool server)
+    {
+        EntityManager.instance?.OutpostAttack(attackerID, SetCoordinate(outpostPos, server), server);
+    }
     //[ClientRpc]
     //public void RpcSetCoordinateData(Vector3 coordVec) => EntityManager.instance?.SetCoordinateData(coordVec);
 
@@ -41,7 +57,7 @@ public class NetworkRpcFunc : NetworkBehaviour
     public void RpcEffectSolve(string card_id, bool server) => effectManager.EffectSolve(card_id, server);
 
     [ClientRpc]
-    public void RpcSelect_Effect_Target(int entityID, bool targetPlayer, bool server) => effectManager.Select_Target(entityID, targetPlayer, server);
+    public void RpcSelect_Effect_Target(int entityID, bool server) => effectManager.Select_Target(entityID, server);
 
    [ClientRpc]
     public void RpcRandomTargetEffect(int entity_id, string card_id) => EntityManager.instance?.RandomTargetEffect(entity_id, card_id);
@@ -71,7 +87,10 @@ public class NetworkRpcFunc : NetworkBehaviour
     public void RpcReloadCard(bool server) => CardManager.instance?.ReloadCard(server);
 
     [ClientRpc]
-    public void RpcTryPutCard(bool server, string card_id, Vector3 selectPos) => CardManager.instance?.TryPutCard(server, card_id, selectPos);
+    public void RpcTryPutCard(bool server, string card_id, Vector3 selectPos)
+    {
+        CardManager.instance?.TryPutCard(server, card_id, SetCoordinate(selectPos, server));
+    }
 
     [ClientRpc]
     public void RpcSetMostFrontOrderInit(bool server) => CardManager.instance?.SetMostFrontOrderInit(server);
@@ -80,7 +99,10 @@ public class NetworkRpcFunc : NetworkBehaviour
 
     #region Map Manager
     [ClientRpc]
-    public void RpcSetOutpost(Coordinate coordinate, bool server) => MapManager.instance?.SetOutpost(coordinate, server);
+    public void RpcSetOutpost(Vector3 outpostCoordVec, bool server)
+    {
+        MapManager.instance?.SetOutpost(SetCoordinate(outpostCoordVec, server), server);
+    }
 
     #endregion
 

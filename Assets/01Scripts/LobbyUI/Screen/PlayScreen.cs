@@ -8,7 +8,7 @@ using Steamworks;
 public class PlayScreen : MonoBehaviour
 {
 
-    public Web web;
+    //public Web web;
 
     public Image userIcon;
     public TMP_Text username_Text;
@@ -16,6 +16,15 @@ public class PlayScreen : MonoBehaviour
     public GameObject deckListContent;
 
     public DeckManager deckManager;
+
+    [Header("버튼 텍스트 모음")]
+    public TMP_Text createRoom_Text;
+    public TMP_Text joinRoom_Text;
+    public TMP_Text quickMatch_Text;
+    public TMP_Text joinCodeInput_Text;
+    public TMP_Text singlePlay_Text;
+    public TMP_Text exit_Text;
+
 
     private void OnEnable()
     {
@@ -52,13 +61,14 @@ public class PlayScreen : MonoBehaviour
 
     void PlayerProfileUpdate()
     {
-        float winRate = web.win / (web.lose + web.win) * 100f;
-        string winRateStr = (web.lose == 0) ? "100.0" : winRate.ToString("F1");
-        if (web.win == 0)
+        UserInfo user = DataManager.instance.userInfo;
+        float winRate = user.WinRate();
+        string winRateStr = (user.Lose == 0) ? "100.0" : winRate.ToString("F1");
+        if (user.Win == 0)
             winRateStr = "0.00";
 
         username_Text.text = SteamFriends.GetPersonaName();
-        playerRecord_Text.text = web.win + "승 " + web.lose + "패\n( " + winRateStr + " % )";
+        playerRecord_Text.text = user.Win + "W " + user.Lose + "L\n( " + winRateStr + " % )";
         Texture2D steamAvatar = GetSteamImageAsTexture2D(SteamFriends.GetMediumFriendAvatar(SteamUser.GetSteamID()));
 
         Rect rect = new Rect(0, 0, steamAvatar.width, steamAvatar.height);
@@ -93,5 +103,41 @@ public class PlayScreen : MonoBehaviour
     void MyDeckListUpdate()
     {
         deckManager.MyDeckListUpdate(deckListContent, false);
+    }
+
+    public void ChangeButtonLanguage()
+    {
+        LocalizationData localizationData = LocalizationManager.instance.Read("LocalizationData/UIText");
+
+        for (int i = 0; i < localizationData.items.Count; i++)
+        {
+            if (localizationData.items[i].tag == "CreateRoom")
+            {
+                createRoom_Text.text = localizationData.items[i].value;
+            }
+            if (localizationData.items[i].tag == "JoinRoom")
+            {
+                joinRoom_Text.text = localizationData.items[i].value;
+            }
+            if (localizationData.items[i].tag == "QuickMatch")
+            {
+                quickMatch_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "Exit")
+            {
+                exit_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "JoinCodeInput")
+            {
+                joinCodeInput_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "SinglePlay")
+            {
+                joinCodeInput_Text.text = localizationData.items[i].value;
+            }
+        }
     }
 }

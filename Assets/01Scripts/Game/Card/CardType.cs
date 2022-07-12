@@ -69,16 +69,19 @@ public class CardType
         switch (tribeStr)
         {
             case "dragon":
-                this.tribe = Tribe.Dragon;
+                tribe = Tribe.Dragon;
                 break;
             case "warrior":
-                this.tribe = Tribe.Warrior;
+                tribe = Tribe.Warrior;
                 break;
             case "magician":
-                this.tribe = Tribe.Magician;
+                tribe = Tribe.Magician;
+                break;
+            case "common":
+                tribe = Tribe.Common;
                 break;
             default:
-                this.tribe = Tribe.None;
+                tribe = Tribe.Common;
                 break;
         }
     }
@@ -90,9 +93,20 @@ public class CardType
         SetCardCategory(cardData["category"]);
         SetRole(cardData["type"]);
 
-        if (card_category == CardCategory.Magic)
-            typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/magic") as Sprite;
-        else
-            typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/" + cardData["move"]) as Sprite;
+        switch (attack_type)
+        {
+            case AttackType.melee:
+                typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/melee");
+                break;
+            case AttackType.shooter:
+                typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/shooter");
+                break;
+            case AttackType.runner:
+                typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/runner");
+                break;
+            default:
+                typeIcon = Resources.Load<Sprite>("Images/CardTypeIcon/magic");
+                break;
+        }
     }
 }

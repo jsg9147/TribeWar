@@ -5,9 +5,7 @@ using UnityEngine.UI;
 
 public class DeckManager : MonoBehaviour
 {
-    public Web web;
     [SerializeField] GameObject match_Deck_Select_Content;
-    [SerializeField] GameObject deckSelectPrefab;
 
     [SerializeField] Transform addDeckButton; // 덱 리스트 업데이트시 파괴 방지용
     [SerializeField] GameObject myDeckList_Content; // 초기화 시킬 방법이 안떠올라 사용
@@ -17,15 +15,10 @@ public class DeckManager : MonoBehaviour
 
     List<MyDeck> myDeckList;
     public Button matchButton;
-    bool select;
-
-    List<DeckSelection> deckList = new List<DeckSelection>();
 
     public void MyDeckListUpdate(GameObject myDeckContent, bool _EditMyDeck)
     {
-        GameObject deckPrefab = _EditMyDeck ? myDeckEditPrefab : myDeckPrefab;
-
-        if (web.myDeckList == null)
+        if (DataManager.instance.playerDecks == null)
             return;
 
         foreach (Transform child in myDeckContent.transform)
@@ -33,10 +26,9 @@ public class DeckManager : MonoBehaviour
             if (child != addDeckButton)
                 Destroy(child.gameObject);
         }
-
         myDeckList = new List<MyDeck>();
-        List<Deck> deckList = web.myDeckList;
-
+        List<Deck> deckList = DataManager.instance.playerDecks;
+        
         foreach (Deck deck in deckList)
         {
             if (_EditMyDeck)
@@ -48,7 +40,7 @@ public class DeckManager : MonoBehaviour
             {
                 MyDeckCreate(myDeckContent, deck);
                 myDeckContent.GetComponent<FlexibleGrid>().SetFlexibleGrid();
-                matchButton.interactable = !(web.selected_Deck == null);
+                matchButton.interactable = !(DataManager.instance.Select_Deck == null);
             }
         }
 
@@ -60,13 +52,13 @@ public class DeckManager : MonoBehaviour
         MyDeck myDeck = myDeckObj.GetComponent<MyDeck>();
         myDeck.Setup(deck);
 
-        if (web.recentlyDeckIndex == deck.index)
+        if (DataManager.instance.userInfo.Resently_Deck_index == deck.index)
         {
             myDeck.SelectDeck(true);
-            web.selected_Deck = deck;
+            DataManager.instance.Select_Deck = deck;
         }
 
-        this.myDeckList.Add(myDeck);
+        myDeckList.Add(myDeck);
 
         myDeckObj.GetComponent<Button>().onClick.AddListener(() =>
         {
@@ -75,8 +67,8 @@ public class DeckManager : MonoBehaviour
                 allDeck.SelectDeck(false);
             }
             myDeck.SelectDeck(true);
-            StartCoroutine(WebMain.instance.web.UpdateRecentlyUsedDeck(Steamworks.SteamUser.GetSteamID().ToString(), deck.index));
-            web.selected_Deck = deck;
+            DataManager.instance.userInfo.Resently_Deck_index = deck.index;
+            DataManager.instance.Select_Deck = deck;
 
             matchButton.interactable = true;
         });
@@ -91,71 +83,14 @@ public class DeckManager : MonoBehaviour
         myDeckObj.GetComponent<Button>().onClick.AddListener(() =>
         {
             LobbyUI.instance.SelectEditMyDeck(deck);
+            DarkTonic.MasterAudio.MasterAudio.PlaySound("Shuffle");
         });
 
         myDeck.deleteButton.GetComponent<Button>().onClick.AddListener(() =>
         {
-            StartCoroutine(WebMain.instance.web.DeleteDeck(deck.index.ToString()));
-            WebMain.instance.web.myDeckList.Remove(deck);
+            DataManager.instance.playerDecks.Remove(deck);
             MyDeckListUpdate(myDeckList_Content, true);
+            DataManager.instance.SaveDeckList();
         });
-    }
-
-    public void Match_Deck_Select_List_Update()
-    {
-        select = false;
-        List<Deck> deckList = WebMain.instance.web.myDeckList;
-        foreach (Deck deck in deckList)
-        {
-            var deckSelectButton = Instantiate(deckSelectPrefab, match_Deck_Select_Content.transform);
-            deckSelectButton.GetComponent<DeckSelection>().DeckInfoSet(deck.index, deck.name);
-            deckSelectButton.GetComponent<DeckSelection>().IsMatchWindow(true);
-            this.deckList.Add(deckSelectButton.GetComponent<DeckSelection>());
-
-            deckSelectButton.GetComponent<Button>().onClick.AddListener(() =>
-            {
-                Selected_Image_SetActive(deckSelectButton.GetComponent<DeckSelection>().deck);
-                WebMain.instance.web.selected_Deck = deckSelectButton.GetComponent<DeckSelection>().deck;
-                StartCoroutine(WebMain.instance.web.UpdateRecentlyUsedDeck(Steamworks.SteamUser.GetSteamID().ToString(), deck.index));
-            });
-        }
-
-        if (this.deckList.Count > 0)
-        {
-            Deck recently_Deck = this.deckList.Find(x => x.deck.index == WebMain.instance.web.recentlyDeckIndex)?.deck;
-            if (recently_Deck == null)
-                return;
-            Selected_Image_SetActive(recently_Deck);
-            WebMain.instance.web.selected_Deck = recently_Deck;
-        }
-
-        matchButton.interactable = select;
-    }
-
-    void Selected_Image_SetActive(Deck selected_Deck)
-    {
-        foreach (var deck in deckList)
-        {
-            if (selected_Deck.index == deck.deck.index)
-            {
-                deck.Selected_This_Deck(true);
-                select = true;
-            }
-            else
-            {
-                deck.Selected_This_Deck(false);
-            }
-        }
-
-        matchButton.interactable = select;
-    }
-
-    public void DeckListReset()
-    {
-        foreach (var deckObjeck in deckList)
-        {
-            deckObjeck.DestroySelf();
-        }
-        deckList.Clear();
     }
 }

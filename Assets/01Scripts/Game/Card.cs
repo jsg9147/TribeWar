@@ -31,12 +31,19 @@ public class Card
     public Ability ability = new Ability();
 
     #region Setup
+
+    Card()
+    {
+    }
+
     public Card(JSONNode cardData)
     {
         this.id = cardData["id"];
         this.name = cardData["name"];
         this.cost = cardData["cost"];
         this.card_text = cardData["text"];
+        if (string.IsNullOrEmpty(card_text))
+            card_text = "";
 
         string effectStr = cardData["effect"];
         string effect_target_Str = cardData["effect_target"];
@@ -106,6 +113,34 @@ public class Card
         {
             SetStat("bp", copyCard.GetBaseStat("bp"));
         }
+    }
+
+    public Card DeepCopy()
+    {
+        Card newCard = new Card();
+        newCard.id = this.id;
+        newCard.name = this.name;
+        newCard.cost = this.cost;
+        newCard.card_text = this.card_text;
+
+        if (this.cardType != null)
+        {
+            newCard.cardType.card_category = this.cardType.card_category;
+            newCard.cardType.moveType = this.cardType.moveType;
+            newCard.cardType.tribe = this.cardType.tribe;
+        }
+
+        newCard.ability = this.ability;
+        newCard.sprite = this.sprite;
+
+        newCard.state = this.state;
+
+        if (cardType.card_category == CardCategory.Monster)
+        {
+            newCard.SetStat("bp", this.GetBaseStat("bp"));
+        }
+
+        return newCard;
     }
 
     void SetStat(string statName, int value)

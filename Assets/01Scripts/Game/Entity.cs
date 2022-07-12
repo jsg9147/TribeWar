@@ -14,6 +14,7 @@ public class Entity : MonoBehaviour
     [SerializeField] SpriteRenderer cardSprite;
     [SerializeField] TMP_Text BattlePower_TMP;
     [SerializeField] SpriteRenderer arrow;
+    [SerializeField] SpriteRenderer checkMark;
 
     public Sprite bishopFrame;
     public Sprite rookFrame;
@@ -61,9 +62,10 @@ public class Entity : MonoBehaviour
     Color originColor;
     Color textColor;
 
+    public bool clickBlock;
     public void Setup(Card card, bool _isMine)
     {
-        this.isMine = _isMine;
+        isMine = _isMine;
         coordinate = new Coordinate();
 
 
@@ -79,11 +81,11 @@ public class Entity : MonoBehaviour
         }
         else
         {
-            originColor = new Color(200, 40, 40);
+            originColor = Color.red;//new Color(200, 40, 40);
             belong = EntityBelong.Enermy;
         }
 
-        this.card = card;
+        this.card = card.DeepCopy();
         cardSprite.sprite = this.card.sprite;
         moveCount = 0;
         liveCount = 0;
@@ -99,16 +101,20 @@ public class Entity : MonoBehaviour
         }
         BattlePower_TMP.color = textColor;
         feildCardFrame.color = originColor;
+
+        clickBlock = false;
     }
 
     #region Mouse activate
 
     private void OnMouseOver()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
+            return;
+        if (clickBlock)
             return;
 
-        feildCardFrame.color = isMine ? new Color(0.5f, 0.5f, 1f) : Color.red;
+        feildCardFrame.color = isMine ? new Color(0.5f, 0.5f, 1f) : Color.yellow;
 
         EntityManager.instance.EntityMouseOver(this);
 
@@ -117,7 +123,7 @@ public class Entity : MonoBehaviour
     }
     private void OnMouseExit()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
             return;
 
         feildCardFrame.color = originColor;
@@ -125,25 +131,30 @@ public class Entity : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
             return;
 
-        if (isMine)
-            EntityManager.instance.EntityMouseDown(this);
+        if (clickBlock)
+            return;
+
+        EntityManager.instance.EntityMouseDown(this);
     }
 
     private void OnMouseUp()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
+            return;
+        if (clickBlock)
             return;
         EntityManager.instance.EntityMouseUP(this);
     }
 
     private void OnMouseDrag()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
             return;
-
+        if (clickBlock)
+            return;
         EntityManager.instance.EntityMouseDrag();
     }
     #endregion
@@ -154,7 +165,6 @@ public class Entity : MonoBehaviour
         Modifier modifier = new Modifier(-damage);
         card.Add_Modifier(modifier);
         UpdateStat();
-
     }
 
     public void MoveTransform(Vector3 pos, bool useDotween, float dotweenTime = 0)
@@ -224,7 +234,7 @@ public class Entity : MonoBehaviour
 
     public void Add_Apply_Effect(Ability ability)
     {
-        foreach (var effect in ability.effects)
+        foreach (Effect effect in ability.effects)
         {
             effect.Resolve(this);
         }
@@ -235,5 +245,10 @@ public class Entity : MonoBehaviour
         arrow.gameObject.SetActive(isActive);
         arrow.transform.DOKill();
         arrow.DOFade(0, 1).SetEase(Ease.InSine).SetLoops(-1, LoopType.Restart);
+    }
+
+    public void CheckMark(bool isActive)
+    {
+        checkMark.gameObject.SetActive(isActive);
     }
 }

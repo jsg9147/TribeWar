@@ -26,7 +26,6 @@ public class SteamLobby : MonoBehaviour
 
     public TMP_InputField joinCode_InputText;
     public string inviteCode;
-    public TMP_Text inviteCode_Text;
 
     bool inviteRoom;
     bool _joinCodeRoom;
@@ -60,7 +59,7 @@ public class SteamLobby : MonoBehaviour
 
         MakeInstance();
         CSteamID steamID = SteamUser.GetSteamID();
-        StartCoroutine(WebMain.instance.web.Login(steamID.m_SteamID.ToString()));
+        //StartCoroutine(WebMain.instance.web.Login(steamID.m_SteamID.ToString()));
 
         lobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
         gameLobbyJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
@@ -81,7 +80,18 @@ public class SteamLobby : MonoBehaviour
                 inviteCode = inviteCode + (char)Random.Range(48, 57);
         }
 
-        inviteCode_Text.text = inviteCode;
+        if (inviteRoom)
+        {
+            try
+            {
+                TMP_Text inviteCode_Text = GameObject.Find("InviteCode_Text").GetComponent<TMP_Text>();
+                inviteCode_Text.text = inviteCode;
+            }
+            catch (System.NullReferenceException ex)
+            {
+                Debug.LogError(ex);
+            }
+        }
     }
 
     void MakeInstance()
@@ -99,7 +109,6 @@ public class SteamLobby : MonoBehaviour
 
     public void JoinLobby(CSteamID lobbyId)
     {
-        Debug.Log("Try Join lobby");
         SteamMatchmaking.JoinLobby(lobbyId);
     }
 
@@ -215,14 +224,33 @@ public class SteamLobby : MonoBehaviour
         {
             return;
         }
-        inviteCode_Text.text = joinCode_InputText.text;
+        GameObject roomScreen = GameObject.Find("RoomScreen");
+
+        if (roomScreen != null)
+        {
+            try
+            {
+                if (roomScreen.activeSelf)
+                {
+                    TMP_Text inviteCode_Text = GameObject.Find("InviteCode_Text").GetComponent<TMP_Text>();
+                    inviteCode_Text.text = joinCode_InputText.text;
+                }
+
+            }
+            catch (System.NullReferenceException ex)
+            {
+                Debug.LogError(ex);
+            }
+        }
+
+        
         MatchManager.instance.AutoJoinLobby(lobbyIDS, result, _joinCodeRoom);
     }
 
     public void CreateNewLobby(ELobbyType lobbyType, bool isInvite)
     {
-        CreateInviteCode();
         inviteRoom = isInvite;
+        CreateInviteCode();
         SteamMatchmaking.CreateLobby(lobbyType, networkManager.maxConnections);
     }
 

@@ -1,0 +1,29 @@
+﻿Language,Index,Content,Tag
+English,1,Create Room,CreateRoom
+English,2,Join Room,JoinRoom
+English,3,Join Code,JoinCode
+English,4,Quick Match,QuickMatch
+English,5,Exit,Exit
+English,6,Ready,Ready
+English,7,Send,Send
+English,8,Player,Player
+English,9,Join Code Input,JoinCodeInput
+English,10,Chat Input,ChatInput
+English,11,Invite Code,InviteCode
+English,12,Search for a game...,Matching
+English,13,vs CPU,SinglePlay
+Korea,1,방 만들기,CreateRoom
+Korea,2,방 참여하기,JoinRoom
+Korea,3,참여코드,JoinCode
+Korea,4,빠른 매칭,QuickMatch
+Korea,5,나가기,Exit
+Korea,6,준비,Ready
+Korea,7,보내기,Send
+Korea,8,플레이어,Player
+Korea,9,참여 코드 입력,JoinCodeInput
+Korea,10,채팅 입력,ChatInput
+Korea,11,초대 코드,InviteCode
+Korea,12,상대를 찾는중,Matching
+Korea,13,vs 컴퓨터,SinglePlay
+Korea,14,덱이 존재하지 않으므로 덱 편집기로 이동합니다.,NoExsitDeck
+English,14,"The deck does not exist, so go to the deck editor.",NoExsitDeck

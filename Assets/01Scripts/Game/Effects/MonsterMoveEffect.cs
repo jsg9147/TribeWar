@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
+//텔레포트
 public class MonsterMoveEffect : MoveEffect
 {
     public override void Resolve(EntityManager entityManager, Entity entity, Tile targetTile)

@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using Mirror;
 using UnityEngine.SceneManagement;
+using DarkTonic.MasterAudio;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,7 +13,12 @@ public class GameManager : MonoBehaviour
         get; private set;
     }
 
+    public bool MultiMode;
+
+    [SerializeField] ProfileController profileController;
     [SerializeField] GameObject LoadingPanel;
+    [SerializeField] GameObject PlayerInfoPanel;
+    [SerializeField] GameObject EnermyInfoPanel;
     [SerializeField] NotificationPanel notificationPanel;
 
     [SerializeField] ResultPanel resultPanel;
@@ -31,11 +37,24 @@ public class GameManager : MonoBehaviour
 
     bool gameEnded;
     public bool clickBlock;
-    public bool isTutorial;
+
+    private MyNetworkManager game;
+
+    private MyNetworkManager Game
+    {
+        get
+        {
+            if (game != null)
+            {
+                return game;
+            }
+            return game = MyNetworkManager.singleton as MyNetworkManager;
+        }
+    }
 
     private void Awake()
     {
-        UISetup();
+        Init();
         clickBlock = true;
         instance = this;
     }
@@ -46,20 +65,60 @@ public class GameManager : MonoBehaviour
         gameEnded = false;
     }
 
-    public void UISetup()
+    public void Init()
     {
         notificationPanel.ScaleZero();
         resultPanel.ScaleZero();
         cameraEffect.SetGrayScale(false);
-        LoadingPanel.SetActive(true);
         menuPanel.SetActive(false);
+        if(MultiMode)
+            LoadingPanel.SetActive(true);
     }
 
+    public bool IsMine(bool isServer)
+    {
+        bool mine;
+        if (MultiMode)
+        {
+            mine = NetworkRpcFunc.instance.isServer == isServer;
+        }
+        else
+        {
+            mine = isServer;
+        }
+        return mine;
+    }
+
+    // 방장 두번실행되는 문제 있음, 트러블은 안나지만 고쳐야함
     public IEnumerator LoadingComplite()
     {
-        Sequence sequence = DOTween.Sequence()
-        .Append(LoadingPanel.transform.DOScale(Vector3.zero, 1.5f)).SetEase(Ease.InCubic);
-        yield return new WaitForSeconds(1f);
+        MasterAudio.PlaySound("PlayStart");
+
+        // 추후 컴퓨터 기록도 넣을까 고민중
+        if (MultiMode)
+        {
+
+            foreach (GamePlayer player in Game.GamePlayers)
+            {
+                if (player.playerSteamId == Steamworks.SteamUser.GetSteamID().m_SteamID)
+                {
+                    profileController.SetMyProfile(player);
+                }
+                else
+                {
+                    profileController.SetOtherProfile(player);
+                }
+            }
+            profileController.BlackPanelSetActive(false);
+            yield return new WaitForSeconds(5f);
+
+            Sequence sequence = DOTween.Sequence()
+            .Append(PlayerInfoPanel.transform.DOMoveX(-960, 1.5f)).SetEase(Ease.InCubic);
+
+            Sequence sequence1 = DOTween.Sequence()
+            .Append(EnermyInfoPanel.transform.DOMoveX(960, 1.5f)).SetEase(Ease.InCubic);
+        }
+
         Notification("본진을 \n설치 하세요");
         clickBlock = false;
     }
@@ -102,14 +161,24 @@ public class GameManager : MonoBehaviour
 
     public void FindLocalGamePlayer()
     {
-        localGamePlayerObject = GameObject.Find("LocalGamePlayer");
-        localGamePlayerScript = localGamePlayerObject.GetComponent<GamePlayer>();
+        if (MultiMode)
+        {
+            localGamePlayerObject = GameObject.Find("LocalGamePlayer");
+            localGamePlayerScript = localGamePlayerObject.GetComponent<GamePlayer>();
+        }
     }
 
 
     public void StartGame()
     {
-        localGamePlayerScript.CmdTurnSetup();
+        if (MultiMode)
+        {
+            localGamePlayerScript.CmdTurnSetup();
+        }
+        else
+        {
+            TurnManager.instance.TurnSetup(Random.Range(0, 2));
+        }
     }
 
     public void EndTurnBtnSetup(bool isActive) => endTurnBtn.transform.GetComponent<EndTurnBtn>().Setup(isActive);
@@ -117,9 +186,17 @@ public class GameManager : MonoBehaviour
 
     public void GameResult(bool gameResult, bool server)
     {
-        bool isMine = NetworkRpcFunc.instance.isServer == server;
+        bool isMine;
+        if (MultiMode)
+        {
+            isMine = NetworkRpcFunc.instance.isServer == server;
+        }
+        else
+        {
+            isMine = server;
+        }
 
-        gameResult = isMine ? gameResult : !gameResult;
+        gameResult = isMine ? !gameResult : gameResult;
 
         if (gameEnded == false)
         {
@@ -130,10 +207,13 @@ public class GameManager : MonoBehaviour
 
     public void GameResult(bool gameResult)
     {
-        if (NetworkRpcFunc.instance.isClient)
-            localGamePlayerScript.CmdGameResult(gameResult, NetworkRpcFunc.instance.isServer);
-        if (NetworkRpcFunc.instance.isServer)
-            NetworkRpcFunc.instance.RpcGameResult(gameResult, NetworkRpcFunc.instance.isServer);
+        if (MultiMode)
+        {
+            if (NetworkRpcFunc.instance.isClient)
+                localGamePlayerScript.CmdGameResult(gameResult, NetworkRpcFunc.instance.isServer);
+            if (NetworkRpcFunc.instance.isServer)
+                NetworkRpcFunc.instance.RpcGameResult(gameResult, NetworkRpcFunc.instance.isServer);
+        }
 
         if (gameEnded == false)
         {
@@ -154,6 +234,12 @@ public class GameManager : MonoBehaviour
     IEnumerator Gameover(bool gameResult)
     {
         yield return new WaitForSeconds(1f);
+        if (MultiMode == false)
+        {
+            gameResult = !gameResult;
+        }
+
+        CardManager.instance.Can_Use_Effect(false);
 
         TurnManager.instance.isLoading = true;
         endTurnBtn.SetActive(false);
@@ -163,7 +249,14 @@ public class GameManager : MonoBehaviour
         cameraEffect.SetGrayScale(!gameResult);
         yield return delay2;
 
-        localGamePlayerScript.CanEndGame();
+        if (MultiMode)
+        {
+            localGamePlayerScript.CanEndGame();
+        }
+        else
+        {
+            SceneManager.LoadSceneAsync("MainMenu");
+        }
     }
 
     IEnumerator DisconnectGameover()
@@ -177,7 +270,14 @@ public class GameManager : MonoBehaviour
 
     public void Surrender()
     {
-        GameResult(false);
+        if (AIManager.instance.SinglePlay)
+        {
+            GameResult(true);
+        }
+        else
+        {
+            GameResult(false);
+        }
         menuPanel.SetActive(false);
     }
 
@@ -201,7 +301,7 @@ public class GameManager : MonoBehaviour
 
             clickBlock = menuPanel.activeSelf;
 
-            foreach (var tile in MapManager.instance.mapData)
+            foreach (Tile tile in MapManager.instance.mapData)
             {
                 tile.ResetColor();
             }

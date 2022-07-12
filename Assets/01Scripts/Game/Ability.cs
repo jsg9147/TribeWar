@@ -125,19 +125,25 @@ public class Ability
                 break;
 
             case "control":
-                var targetControl = new ControlLossEffect();
+                ControlLossEffect targetControl = new ControlLossEffect();
                 targetControl.effectClass = EffectClass.control;
                 targetControl.value = Int32.Parse(effectStr.Split('.')[2]);
                 effects.Add(targetControl);
                 break;
 
             case "type":
-                var typeChange = new AttackTypeEffect();
+                AttackTypeEffect typeChange = new AttackTypeEffect();
                 typeChange.SetChangeType(effectStr.Split('.')[1]);
                 typeChange.value = Int32.Parse(effectStr.Split('.')[2]);
                 effects.Add(typeChange);
                 break;
-                
+
+            case "tributeMagic":
+                TributeMagicEffect tributeMagicEffect = new TributeMagicEffect();
+                tributeMagicEffect.effectClass = EffectClass.tributeMagic;
+                tributeMagicEffect.value = int.Parse(effectStr.Split('.')[1]);
+                effects.Add(tributeMagicEffect);
+                break;
             default:
                 break;
         }

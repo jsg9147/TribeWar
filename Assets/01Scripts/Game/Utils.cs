@@ -61,14 +61,14 @@ public class Coordinate
 
     public void SetReverse(int maxSize)
     {
-        this.mapSize = maxSize - 1;
+        mapSize = maxSize - 1;
         int reverseX, reverseY;
         reverseX = mapSize - x;
         reverseY = mapSize - y;
 
-        this.x = reverseX;
-        this.y = reverseY;
-        this.vector3Pos = new Vector2(reverseX, reverseY);
+        x = reverseX;
+        y = reverseY;
+        vector3Pos = new Vector2(reverseX, reverseY);
     }
 
     public bool MaxDistance(Coordinate coord, int distance)

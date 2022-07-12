@@ -18,7 +18,7 @@ public class MyDeck : MonoBehaviour
     public void Setup(Deck deck)
     {
         myDeck = deck;
-        representCard = myDeck.representCard;
+        representCard = DataManager.instance.CardData(myDeck.representCard);
         myDeckTitle.text = deck.name;
 
         if (representCard != null)
@@ -29,6 +29,6 @@ public class MyDeck : MonoBehaviour
     public void SelectDeck(bool selected)
     {
         select_Background.SetActive(selected);
-        this.select = selected;
+        select = selected;
     }
 }

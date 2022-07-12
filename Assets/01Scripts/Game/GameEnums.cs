@@ -60,7 +60,7 @@ public enum AttackType
 
 public enum Tribe
 {
-    None, Dragon, Magician, Warrior
+    Dragon, Magician, Warrior, Common
 }
 
 public enum EffectTarget
@@ -95,7 +95,7 @@ public enum EffectTarget
 public enum TileState
 {
     onPlayerMonster,
-    onEnermyEntity,
+    onEnermyMonster,
     playerOutpost,
     enermyOutpost, // 추후 삭제 하고 outpost 를 entity 화 시켜야함 지금처럼 같이 두지 말고
     empty,
@@ -120,5 +120,6 @@ public enum EffectClass
     summon,
     tribute,
     targetTribute,
-    control
+    control,
+    tributeMagic
 }

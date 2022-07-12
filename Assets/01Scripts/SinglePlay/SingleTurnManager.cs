@@ -32,99 +32,99 @@ public class SingleTurnManager : MonoBehaviour
     [SerializeField][Header("턴 딜레이")] float turnDelay;
     WaitForSeconds delay;
 
-    private void Awake()
-    {
-        instance = this;
-    }
+    //private void Awake()
+    //{
+    //    instance = this;
+    //}
 
-    private void Start()
-    {
-    }
-    private void Update()
-    {
-        if (countStart && !isLoading && !isTutorial)
-            TurnTimer();
-    }
+    //private void Start()
+    //{
+    //}
+    //private void Update()
+    //{
+    //    if (countStart && !isLoading && !isTutorial)
+    //        TurnTimer();
+    //}
 
-    void Init()
-    {
-        delay = new WaitForSeconds(turnDelay);
-    }
+    //void Init()
+    //{
+    //    delay = new WaitForSeconds(turnDelay);
+    //}
 
-    public void TurnSetup(int randomTurn)
-    {
-        myTurn = randomTurn == 0;
+    //public void TurnSetup(int randomTurn)
+    //{
+    //    myTurn = randomTurn == 0;
 
-        StartCoroutine(StartGameCo(myTurn));
-    }
+    //    StartCoroutine(StartGameCo(myTurn));
+    //}
 
-    public void TurnEnd()
-    {
-        firstTurn = false;
-        myTurn = !myTurn;
-        StartCoroutine(StartTurnCo(myTurn));
-    }
+    //public void TurnEnd()
+    //{
+    //    firstTurn = false;
+    //    myTurn = !myTurn;
+    //    StartCoroutine(StartTurnCo(myTurn));
+    //}
 
-    public IEnumerator StartGameCo(bool playerTurn)
-    {
-        myTurn = playerTurn;
-        yield return delay;
+    //public IEnumerator StartGameCo(bool playerTurn)
+    //{
+    //    myTurn = playerTurn;
+    //    yield return delay;
 
-        firstTurn = true;
+    //    firstTurn = true;
 
-        StartCoroutine(StartTurnCo(playerTurn));
+    //    StartCoroutine(StartTurnCo(playerTurn));
 
-        isLoading = true;
-    }
+    //    isLoading = true;
+    //}
 
-    public IEnumerator StartTurnCo(bool playerTurn)
-    {
-        isLoading = true;
+    //public IEnumerator StartTurnCo(bool playerTurn)
+    //{
+    //    isLoading = true;
 
-        myTurn = playerTurn;
-        currentValue = turnTime;
-        OnTurnStarted?.Invoke(playerTurn);
-        OnAddCard?.Invoke(playerTurn);
+    //    myTurn = playerTurn;
+    //    currentValue = turnTime;
+    //    OnTurnStarted?.Invoke(playerTurn);
+    //    OnAddCard?.Invoke(playerTurn);
 
-        if (myTurn)
-        {
-            SingleManager.instance.Notification("내 턴! \n행동 하라우!");
-        }
-        else
-        {
-            SingleManager.instance.Notification("상대 턴!");
-        }
+    //    if (myTurn)
+    //    {
+    //        SingleManager.instance.Notification("턴 시작!");
+    //    }
+    //    else
+    //    {
+    //        SingleManager.instance.Notification("상대 턴!");
+    //    }
 
-        yield return delay;
+    //    yield return delay;
 
-        countStart = true;
-        isLoading = false;
-    }
+    //    countStart = true;
+    //    isLoading = false;
+    //}
 
-    public void StartTurn()
-    {
-        StartCoroutine(StartTurnCo(myTurn));
-    }
+    //public void StartTurn()
+    //{
+    //    StartCoroutine(StartTurnCo(myTurn));
+    //}
 
-    void TurnTimer()
-    {
-        if (currentValue > 0)
-        {
-            currentValue -= Time.deltaTime;
-            timeTMP.text = "남은 시간 : " + ((int)currentValue).ToString() + "s";
-            if ((int)currentValue == 10 && timeWarning)
-            {
-                timeWarning = false;
-                SingleManager.instance.Notification("10초\n남았습니다");
-            }
-        }
-        else
-        {
-            timeTMP.text = "End";
-            countStart = false;
-            timeWarning = true;
+    //void TurnTimer()
+    //{
+    //    if (currentValue > 0)
+    //    {
+    //        currentValue -= Time.deltaTime;
+    //        timeTMP.text = "남은 시간 : " + ((int)currentValue).ToString() + "s";
+    //        if ((int)currentValue == 10 && timeWarning)
+    //        {
+    //            timeWarning = false;
+    //            SingleManager.instance.Notification("10초\n남았습니다");
+    //        }
+    //    }
+    //    else
+    //    {
+    //        timeTMP.text = "End";
+    //        countStart = false;
+    //        timeWarning = true;
 
-            StartTurn();
-        }
-    }
+    //        StartTurn();
+    //    }
+    //}
 }

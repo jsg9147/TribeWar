@@ -11,10 +11,12 @@ public class GamePlayer : NetworkBehaviour
 
     [Header("GamePlayer Info")]
     [SyncVar(hook = nameof(HandlePlayerNameUpdate))] public string playerName;
+    [SyncVar] public int iImage;
     [SyncVar] public int ConnectionId;
     [SyncVar] public int playerNumber;
     [SyncVar(hook = nameof(HandlePlayerWinUpdate))] public int playerWin;
     [SyncVar(hook = nameof(HandlePlayerLoseUpdate))] public int playerLose;
+    [SyncVar(hook = nameof(HandlePlayerWinRateUpdate))] public float playerWinRate;
 
     [SerializeField] bool isCreate = false;
 
@@ -32,7 +34,6 @@ public class GamePlayer : NetworkBehaviour
 
     [Header("bool Synk")]
     [SyncVar] public bool canSelectEffectTarget;
-    [SyncVar] public bool canMove;
 
     CardMove cardMove = new CardMove();
 
@@ -50,33 +51,43 @@ public class GamePlayer : NetworkBehaviour
         }
     }
 
+    
+
     public override void OnStartAuthority()
     {
+        UserInfo userInfo = DataManager.instance.userInfo;
+
         CmdSetPlayerName(SteamFriends.GetPersonaName().ToString());
-        CmdSetPlayerRecord((int)WebMain.instance.web.win, (int)WebMain.instance.web.lose);
+        CmdSetPlayerRecord(userInfo.Win, userInfo.Lose, userInfo.WinRate());
         gameObject.name = "LocalGamePlayer";
         MatchManager.instance.FindLocalGamePlayer(this);
 
     }
 
     [Command]
-    private void CmdSetPlayerRecord(int win, int lose)
+    private void CmdSetPlayerRecord(int win, int lose, float winRate)
     {
-        this.HandlePlayerWinUpdate(this.playerWin, win);
-        this.HandlePlayerLoseUpdate(this.playerLose, lose);
+        HandlePlayerWinUpdate(playerWin, win);
+        HandlePlayerLoseUpdate(playerLose, lose);
+        HandlePlayerWinRateUpdate(playerWinRate, winRate);
 
     }
 
     public void CreatePlayerProfiles()
     {
-        if (isCreate)
-            return;
+        if (isCreate) { return; }
+
+        GameObject playerSlot = GameObject.Find("RoomPlayer Slot");
         if (SceneManager.GetActiveScene().name == "MainMenu")
         {
             profile = Instantiate(playerProfilePrefabs);
-            profile.PlayerProfileUpdate(playerWin, playerLose, playerName, SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId)), hasAuthority);
-            profile.transform.SetParent(Game.playerSlotObject.transform);
-            profile.transform.localScale = Vector3.one;
+            profile.PlayerProfileUpdate(playerWin, playerLose, playerWinRate, playerName, SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId)), hasAuthority);
+            iImage = SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId));
+            if (playerSlot != null)
+            {
+                profile.transform.SetParent(playerSlot.transform);
+                profile.transform.localScale = Vector3.one;
+            }
             isCreate = true;
         }
     }
@@ -89,13 +100,19 @@ public class GamePlayer : NetworkBehaviour
     public void HandlePlayerWinUpdate(int oldValue, int newValue)
     {
         if (isServer)
-            this.playerWin = newValue;
+            playerWin = newValue;
     }
 
     public void HandlePlayerLoseUpdate(int oldValue, int newValue)
     {
         if (isServer)
-            this.playerLose = newValue;
+            playerLose = newValue;
+    }
+
+    public void HandlePlayerWinRateUpdate(float oldValue, float newValue)
+    {
+        if (isServer)
+            playerWinRate = newValue;
 
         CreatePlayerProfiles();
     }
@@ -103,7 +120,7 @@ public class GamePlayer : NetworkBehaviour
     [Command]
     private void CmdSetPlayerName(string playerName)
     {
-        this.HandlePlayerNameUpdate(this.playerName, playerName);
+        HandlePlayerNameUpdate(this.playerName, playerName);
     }
     public override void OnStartClient()
     {
@@ -112,13 +129,13 @@ public class GamePlayer : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        DontDestroyOnLoad(this.gameObject);
+        DontDestroyOnLoad(gameObject);
     }
 
     public void HandlePlayerNameUpdate(string oldValue, string newValue)
     {
         if (isServer)
-            this.playerName = newValue;
+            playerName = newValue;
 
     }
     public void ChangeLoadingStatus()
@@ -129,13 +146,13 @@ public class GamePlayer : NetworkBehaviour
     [Command]
     void CmdChangePlayerLoadingStatus()
     {
-        this.isPlayerLoadingComplite = !this.isPlayerLoadingComplite;
+        isPlayerLoadingComplite = !isPlayerLoadingComplite;
     }
     void HandlePlayerLoadingStatusChange(bool oldValue, bool newValue)
     {
         if (isServer)
         {
-            this.isPlayerLoadingComplite = newValue;
+            isPlayerLoadingComplite = newValue;
         }
         Game.PlayerAllLoading();
     }
@@ -148,16 +165,16 @@ public class GamePlayer : NetworkBehaviour
     [Command]
     void CmdChangePlayerReadyStatus()
     {
-        this.isPlayerReady = !this.isPlayerReady;
+        isPlayerReady = !isPlayerReady;
     }
 
     void HandlePlayerReadyStatusChange(bool oldValue, bool newValue)
     {
         if (isServer)
         {
-            this.isPlayerReady = newValue;
+            isPlayerReady = newValue;
         }
-        profile.ReadyState(this.isPlayerReady);
+        profile.ReadyState(isPlayerReady);
         Game.PlayerAllReady();
     }
 
@@ -217,7 +234,7 @@ public class GamePlayer : NetworkBehaviour
     public void DeckCountingUpdate(int oldValue, int newValue)
     {
         if (isServer)
-            this.deckCount = newValue;
+            deckCount = newValue;
         CardManager.instance.Deck_Counting_Update(hasAuthority, newValue);
     }
 
@@ -230,21 +247,8 @@ public class GamePlayer : NetworkBehaviour
     [Command]
     public void CmdSetOutpostPos(Vector3 outpostCoordVec, bool server)
     {
-        NetworkRpcFunc.instance.RpcSetOutpost(new Coordinate(outpostCoordVec), server);
+        NetworkRpcFunc.instance.RpcSetOutpost(outpostCoordVec, server);
     }
-
-    //[Command]
-    //public void CmdSummon(bool server, string card_id, Vector3 coordVec)
-    //{
-    //    NetworkRpcFunc.instance.RpcSummon(server, card_id, new Coordinate(coordVec));
-    //    NetworkRpcFunc.instance.RpcSetMostFrontOrderInit(server);
-    //}
-
-    //[Command]
-    //public void CmdSetSummonCoord(Vector3 coordVec)
-    //{
-    //    NetworkRpcFunc.instance.RpcSetCoordinateData(coordVec);
-    //}
 
     [Command]
     public void CmdTryPutCard(bool server, string card_id, Vector3 selectPos)
@@ -274,7 +278,7 @@ public class GamePlayer : NetworkBehaviour
     [Command]
     public void CmdOutpostAttack(int attackerID, Vector3 outpostVector, bool server)
     {
-        NetworkRpcFunc.instance.RpcOutpostAttack(attackerID, new Coordinate(outpostVector), server);
+        NetworkRpcFunc.instance.RpcOutpostAttack(attackerID, outpostVector, server);
     }
 
     [Command]
@@ -284,38 +288,21 @@ public class GamePlayer : NetworkBehaviour
     }
 
     [Command]
-    public void CmdSelectEffectTarget(int entityID, bool targetPlayer, bool server)
+    public void CmdSelectEffectTarget(int entityID, bool server)
     {
-        NetworkRpcFunc.instance.RpcSelect_Effect_Target(entityID, targetPlayer, server);
+        NetworkRpcFunc.instance.RpcSelect_Effect_Target(entityID, server);
     }
 
     [Command]
     public void CmdRandomTargetAppoint(int entity_Id, string card_id)
     {
-        //List<Entity> playerEntities = EntityManager.instance.playerEntities;
-        //List<Entity> opponentEntities = EntityManager.instance.opponentEntities;
-
-        //bool randomPlayer;
-
-        //if (playerEntities.Count == 0 && opponentEntities.Count == 0)
-        //    return;
-        //else if (playerEntities.Count == 0)
-        //    randomPlayer = false;
-        //else if (opponentEntities.Count == 0)
-        //    randomPlayer = true;
-        //else
-        //    randomPlayer = Random.Range(0, 2) == 0;
-
-        //int targetIndex =
-        //    randomPlayer ? Random.Range(0, playerEntities.Count - 1) : Random.Range(0, opponentEntities.Count - 1);
-
         NetworkRpcFunc.instance.RpcRandomTargetEffect(entity_Id, card_id);
     }
 
     [Command]
     public void CmdCardMove(int entityID, bool targetPlyaer, Vector3 movePos, bool server)
     {
-        NetworkRpcFunc.instance.RpcCardMove(entityID, targetPlyaer, movePos, server);
+        NetworkRpcFunc.instance.RpcCardMove(entityID, movePos, server);
     }
 
 

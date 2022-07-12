@@ -13,12 +13,9 @@ public class PlayerProfile : MonoBehaviour
     public Image background;
     public GameObject readyImage;
 
-    public void PlayerProfileUpdate(float win, float lose, string steamName, int iImage, bool hasAuthority)
+    public void PlayerProfileUpdate(float win, float lose, float winRate ,string steamName, int iImage, bool hasAuthority)
     {
-        float winRate = win / (lose + win) * 100f;
-        string winRateStr = (lose == 0) ? "100.0" : winRate.ToString("F1");
-        if (win == 0)
-            winRateStr = "0.00";
+        string winRateStr = winRate.ToString("F1");
 
         username_Text.text = steamName;
         playerRecord_Text.text = (int)win + "W " + (int)lose + "L ( " + winRateStr + " % )";

@@ -26,9 +26,9 @@ public class CameraEffect : MonoBehaviour
 
     private void LateUpdate()
     {
-        Move_Camera_Position();
-        MoveObjectFunc();
-        ZoomTest();
+        //Move_Camera_Position();
+        //MoveObjectFunc();
+        //ZoomTest();
     }
 
     private void OnDestroy()

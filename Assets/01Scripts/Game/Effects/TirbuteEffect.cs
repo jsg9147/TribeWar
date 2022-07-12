@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class TirbuteEffect : TributeBaseEffect
 {
-    Tribe targetTribe;
-    
     public override void Resolve(Entity entity)
     {
 
@@ -23,5 +21,26 @@ public class TargetTributeEffect : TributeBaseEffect
     {
 
         return base.AreTargetsAvailable(tributeCard, targetCard);
+    }
+}
+
+public class TributeMagicEffect : TributeBaseEffect
+{
+    public override void Resolve(Entity entity)
+    {
+
+    }
+
+    public override void Resolve(EntityManager entityManager, Card card, bool isMine)
+    {
+        Debug.Log(value);
+        if (entityManager.tribeTributeCount.ContainsKey(card.cardType.tribe))
+        {
+            entityManager.tribeTributeCount[card.cardType.tribe] = entityManager.tribeTributeCount[card.cardType.tribe] + value;
+        }
+        else
+        {
+            entityManager.tribeTributeCount.Add(card.cardType.tribe, value);
+        }
     }
 }

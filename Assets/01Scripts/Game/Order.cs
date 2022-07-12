@@ -24,13 +24,13 @@ public class Order : MonoBehaviour
     public void SetOrder(int order)
     {
         int mulOrder = order * 10;
-        foreach (var renderer in backRenderers)
+        foreach (Renderer renderer in backRenderers)
         {
             renderer.sortingLayerName = sortingLayerName;
             renderer.sortingOrder = mulOrder;
         }
 
-        foreach (var renderer in middleRenderers)
+        foreach (Renderer renderer in middleRenderers)
         {
             renderer.sortingLayerName = sortingLayerName;
             renderer.sortingOrder = mulOrder + 1;

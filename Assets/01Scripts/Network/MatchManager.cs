@@ -59,9 +59,6 @@ public class MatchManager : MonoBehaviour
         {
             if (lobbyIDS[i].m_SteamID == result.m_ulSteamIDLobby)
             {
-                Debug.Log("LobbyID : " + (SteamMatchmaking.GetNumLobbyMembers((CSteamID)lobbyIDS[i].m_SteamID)).ToString() +
-                    " max players: " + SteamMatchmaking.GetLobbyMemberLimit((CSteamID)lobbyIDS[i].m_SteamID).ToString());
-
                 SteamLobby.instance.JoinLobby(lobbyIDS[i]);
 
                 if (joinRoom)

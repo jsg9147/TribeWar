@@ -23,6 +23,6 @@ public class WebMain : MonoBehaviour
     private void Start()
     {
         web = GetComponent<Web>();
-        userInfo = GetComponent<UserInfo>();
+        //userInfo = GetComponent<UserInfo>();
     }
 }

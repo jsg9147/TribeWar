@@ -42,11 +42,18 @@ public class EffectManager : MonoBehaviour
     {
         if (effect_Activated)
         {
-            GameManager.instance.localGamePlayerScript.CmdSelectEffectTarget(entity.id, entity.isMine, NetworkRpcFunc.instance.isServer);
+            if (GameManager.instance.MultiMode)
+            {
+                GameManager.instance.localGamePlayerScript.CmdSelectEffectTarget(entity.id, NetworkRpcFunc.instance.isServer);
+            }
+            else
+            {
+                Select_Target(entity.id, true);
+            }
         }
     }
 
-    public void Select_Target(int entityID, bool targetPlayer, bool server)
+    public void Select_Target(int entityID, bool server)
     {
         bool isMine = server == NetworkRpcFunc.instance.isServer;
 
@@ -108,17 +115,20 @@ public class EffectManager : MonoBehaviour
                 {
                     effect.Resolve(targetEntity);
                 }
-                entityManager.UpdateEntityState();
+                entityManager.effect_Count++;
             }
         }
+        entityManager.UpdateEntityState();
     }
 
     public bool EffectTrigger(bool isMine, string card_id)
     {
-        triggered_EffectCard = CardDatabase.instance.CardData(card_id);
+        triggered_EffectCard = DataManager.instance.CardData(card_id);
 
         if (EffectRequireExist(isMine, entityManager.All_Entities, triggered_EffectCard) == false)
+        {
             return false;
+        }
 
         if (triggered_EffectCard.ability.effect_Time == EffectTime.Activated)
         {
@@ -130,7 +140,6 @@ public class EffectManager : MonoBehaviour
             {
                 enermy_Activated_Abilities.Add(triggered_EffectCard.ability);
             }
-
             Activated_Effect(triggered_EffectCard.ability, isMine, entityManager.All_Entities);
             return true;
         }
@@ -138,16 +147,15 @@ public class EffectManager : MonoBehaviour
         {
             if (isMine)
             {
-                GameManager.instance.localGamePlayerScript.CmdEffectSolve(triggered_EffectCard.id, NetworkRpcFunc.instance.isServer);
+                ModeEffectSolve(isMine);
             }
             return true;
         }
-
         if (triggered_EffectCard.cost == 0 || triggered_EffectCard.cardType.card_category == CardCategory.Monster)
         {
             if (isMine)
             {
-                GameManager.instance.localGamePlayerScript.CmdEffectSolve(triggered_EffectCard.id, NetworkRpcFunc.instance.isServer);
+                ModeEffectSolve(isMine);
             }
             return true;
         }
@@ -155,7 +163,7 @@ public class EffectManager : MonoBehaviour
         {
             if (triggered_EffectCard.cost <= entityManager.tributeEntities.Count)
             {
-                GameManager.instance.localGamePlayerScript.CmdEffectSolve(triggered_EffectCard.id, NetworkRpcFunc.instance.isServer);
+                ModeEffectSolve(isMine);
                 return true;
             }
 
@@ -167,10 +175,32 @@ public class EffectManager : MonoBehaviour
         return false;
     }
 
+    void ModeEffectSolve(bool isMine)
+    {
+        if (GameManager.instance.MultiMode)
+        {
+            GameManager.instance.localGamePlayerScript.CmdEffectSolve(triggered_EffectCard.id, NetworkRpcFunc.instance.isServer);
+        }
+        else
+        {
+            EffectSolve(triggered_EffectCard.id, isMine);
+        }
+    }
+
+
     public void EffectSolve(string card_id, bool server)
     {
-        bool isMine = NetworkRpcFunc.instance.isServer == server;
-        Card effectCard = CardDatabase.instance.CardData(card_id);
+        bool isMine;
+        if (GameManager.instance.MultiMode)
+        {
+            isMine = NetworkRpcFunc.instance.isServer == server;
+        }
+        else
+        {
+            isMine = server;
+        }
+
+        Card effectCard = DataManager.instance.CardData(card_id);
         List<Entity> all_Entities = entityManager.All_Entities;
 
         if (effectCard.ability == null)
@@ -205,25 +235,36 @@ public class EffectManager : MonoBehaviour
                     if (isMine) // 둘중 한명만 동작해라는 뜻 같음
                     {
                         NonTargetEffectActive(effectCard, all_Entities, server);
-                        entityManager.UpdateEntityState();
                     }
                 }
                 break;
 
             case EffectTarget.AllCards:
                 NonTargetEffectActive(effectCard, all_Entities, server);
-                entityManager.UpdateEntityState();
                 break;
 
             case EffectTarget.TribeTarget:
                 if (isMine)
                 {
-                    entityManager.ConfirmEffectTrigger(effectCard.TribeStr() + " 타겟을\n선택해주세요");
+                    if (effectCard.cardType.card_category == CardCategory.Monster)
+                    {
+                        entityManager.Select_Monster(false);
+                    }
+                    else
+                    {
+
+                        if (effectCard.ability.Tag.Contains("move"))
+                        {
+                            moveEffect = true;
+                        }
+
+                        GameManager.instance.Notification("타겟을 \n선택해주세요");
+                        effect_Activated = true;
+                    }
                 }
                 break;
             case EffectTarget.PlayerWarrior:
                 NonTargetEffectActive(effectCard, all_Entities, server);
-                entityManager.UpdateEntityState();
                 break;
             case EffectTarget.Player:
                 PlayerTargetEffect(effectCard, isMine);
@@ -231,6 +272,8 @@ public class EffectManager : MonoBehaviour
             default:
                 return;
         }
+
+        entityManager.UpdateEntityState();
         // gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine); // 로그 추가
     }
 
@@ -244,7 +287,7 @@ public class EffectManager : MonoBehaviour
 
     Tribe Target_Tribe(EffectTarget effectTarget)
     {
-        Tribe tribe = Tribe.None;
+        Tribe tribe = Tribe.Common;
         switch (effectTarget)
         {
             case EffectTarget.PlayerWarrior:
@@ -290,12 +333,19 @@ public class EffectManager : MonoBehaviour
     {
         int targetIndex = Random.Range(0, all_Entities.Count - 1);
 
-        GameManager.instance.localGamePlayerScript.CmdRandomTargetAppoint(all_Entities[targetIndex].id, card_id);
+        if (GameManager.instance.MultiMode)
+        {
+            GameManager.instance.localGamePlayerScript.CmdRandomTargetAppoint(all_Entities[targetIndex].id, card_id);
+        }
+        else
+        {
+            EntityManager.instance.RandomTargetEffect(all_Entities[targetIndex].id, card_id);
+        }
     }
 
     public void PlayerTargetEffect(Card effectCard, bool isMine)
     {
-        foreach (var effect in effectCard.ability.effects)
+        foreach (Effect effect in effectCard.ability.effects)
         {
             effect.Resolve(entityManager, effectCard, isMine);
         }
@@ -304,9 +354,9 @@ public class EffectManager : MonoBehaviour
 
     void AllCardsEffectTrigger(Card effectCard, List<Entity> all_Entities)
     {
-        foreach (var entity in all_Entities)
+        foreach (Entity entity in all_Entities)
         {
-            foreach (var effect in effectCard.ability.effects)
+            foreach (Effect effect in effectCard.ability.effects)
             {
                 effect.Resolve(entity);
             }
@@ -332,9 +382,9 @@ public class EffectManager : MonoBehaviour
 
     public void ReceiveRandomEffect(Entity entity, string card_id)
     {
-        Card effectCard = CardDatabase.instance.CardData(card_id);
+        Card effectCard = DataManager.instance.CardData(card_id);
 
-        foreach (var effect in effectCard.ability.effects)
+        foreach (Effect effect in effectCard.ability.effects)
         {
             effect.Resolve(entity);
         }
@@ -345,7 +395,7 @@ public class EffectManager : MonoBehaviour
         EntityBelong belong = isMine ? EntityBelong.Player : EntityBelong.Enermy;
         List<Entity> target_Entities = all_Entities.FindAll(x => x.belong == belong);
 
-        if (triggerCard.cardType.tribe == Tribe.None)
+        if (triggerCard.cardType.tribe == Tribe.Common)
             return true;
 
         if (triggerCard.ability.target.GetTarget() == EffectTarget.Player)
@@ -364,13 +414,23 @@ public class EffectManager : MonoBehaviour
 
     public void Activated_Effect(Ability ability, bool isMine, List<Entity> all_Entities)
     {
-        foreach (var entity in all_Entities)
+        foreach (Entity entity in all_Entities)
         {
             if (ability.target.GetTarget() == EffectTarget.PlayerWarrior)
             {
-                if (entity.card.cardType.tribe == Tribe.Warrior && entity.belong == EntityBelong.Player)
+                if (isMine)
                 {
-                    entity.Add_Apply_Effect(ability);
+                    if (entity.card.cardType.tribe == Tribe.Warrior && entity.belong == EntityBelong.Player)
+                    {
+                        entity.Add_Apply_Effect(ability);
+                    }
+                }
+                else
+                {
+                    if (entity.card.cardType.tribe == Tribe.Warrior && entity.belong == EntityBelong.Enermy)
+                    {
+                        entity.Add_Apply_Effect(ability);
+                    }
                 }
             }
         }
@@ -378,22 +438,14 @@ public class EffectManager : MonoBehaviour
 
     public void Add_Activated_Effect_To_Entity(Entity entity)
     {
-        foreach (var ability in player_Activated_Abilities)
-        {
-            if (ability.target.GetTarget() == EffectTarget.PlayerWarrior)
-            {
-                if (entity.card.cardType.tribe == Tribe.Warrior && entity.belong == EntityBelong.Player)
-                {
-                    entity.Add_Apply_Effect(ability);
-                }
-            }
-        }
+        List<Ability> abilities = entity.isMine ? player_Activated_Abilities : enermy_Activated_Abilities;
+        EntityBelong entityBelong = entity.isMine ? EntityBelong.Player : EntityBelong.Enermy;
 
-        foreach (var ability in enermy_Activated_Abilities)
+        foreach (Ability ability in abilities)
         {
             if (ability.target.GetTarget() == EffectTarget.PlayerWarrior)
             {
-                if (entity.card.cardType.tribe == Tribe.Warrior && entity.belong == EntityBelong.Enermy)
+                if (entity.card.cardType.tribe == Tribe.Warrior && entity.belong == entityBelong)
                 {
                     entity.Add_Apply_Effect(ability);
                 }
@@ -433,11 +485,11 @@ public class EffectManager : MonoBehaviour
 
     void EffectRemove(Card effectCard, List<Entity> entities, Tribe tribe)
     {
-        foreach (var entity in entities)
+        foreach (Entity entity in entities)
         {
             if (entity.card.cardType.tribe == tribe)
             {
-                foreach (var effect in effectCard.ability.effects)
+                foreach (Effect effect in effectCard.ability.effects)
                 {
                     effect.Resolve(entity);
                 }

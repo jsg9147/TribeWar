@@ -83,22 +83,13 @@ public class Tile : MonoBehaviour
     public void ChangeTileColor(Color color) => tileImage.material.color = color;
     public void ResetColor() => tileImage.material.color = originColor;
 
-    //public void SetMonster(Entity entity)
-    //{
-    //    if (entity.isMine)
-    //    {
-    //        tileState = TileState.onPlayerMonster;
-    //    }
-    //    else
-    //    {
-    //        tileState = TileState.onEnermyEntity;
-    //    }
-    //}
-
     public void SetupSelectOutpost(bool player)
     {
         if (player)
+        {
             tileState = TileState.playerOutpost;
+            DarkTonic.MasterAudio.MasterAudio.PlaySound("OutpostSetup");
+        }
         else
             tileState = TileState.enermyOutpost;
     }
@@ -106,7 +97,7 @@ public class Tile : MonoBehaviour
     #region mouse Action
     private void OnMouseEnter()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
             return;
 
         if (can_TileColor_Change)
@@ -127,7 +118,7 @@ public class Tile : MonoBehaviour
 
         ChangeTileColor(Color.blue);
 
-        if (EntityManager.instance != null)
+        if (EntityManager.instance != null && clickBlock == false)
         {
             EntityManager.instance.selectTile = this;
         }
@@ -135,7 +126,7 @@ public class Tile : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
             return;
         if (clickBlock)
             return;
@@ -146,7 +137,7 @@ public class Tile : MonoBehaviour
 
     private void OnMouseExit()
     {
-        if (GameManager.instance?.clickBlock ?? true)
+        if (GameManager.instance.clickBlock)
             return;
 
         if (can_TileColor_Change)

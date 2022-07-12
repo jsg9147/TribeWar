@@ -24,19 +24,4 @@ public class DecreaseCardStatEffect : CardStatEffect
 
         entity.UpdateStat();
     }
-
-    public override void Resolve(SingleEntity entity)
-    {
-        var modfier = new Modifier(-value, duration);
-        entity.card.stats[statID].AddModifier(modfier);
-
-        entity.UpdateStat();
-    }
-    public override void Reverse(SingleEntity entity)
-    {
-        var modfier = new Modifier(value, duration);
-        entity.card.stats[statID].AddModifier(modfier);
-
-        entity.UpdateStat();
-    }
 }

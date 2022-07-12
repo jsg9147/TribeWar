@@ -30,16 +30,17 @@ public class MapManager : MonoBehaviour
 
     public int outpostMaxCount;
     int outpostCount;
-    bool selectOutpostComplete;
+    public bool selectOutpostComplete;
 
     public List<Outpost> player_OutpostList = new List<Outpost>();
     public List<Outpost> opponent_OutpostList = new List<Outpost>();
     public int livePlayerOutpost, liveOpponentOutpost;
 
     public bool select_tile_mode;
-    bool isServer;
 
     Entity temp_entity;
+
+    public List<Coordinate> canSummonPos, enermySummonPos;
 
 
     private void Start()
@@ -47,7 +48,6 @@ public class MapManager : MonoBehaviour
         Setup();
         generateMap();
         ChangeColorOutOfTile(Color.red);
-        isServer = NetworkRpcFunc.instance.isServer;
     }
 
     private void Setup()
@@ -55,14 +55,50 @@ public class MapManager : MonoBehaviour
         mapData = new Tile[mapSize, mapSize];
         selectOutpostComplete = false;
         outpostCount = 0;
+
+        canSummonPos = new List<Coordinate>();
+        enermySummonPos = new List<Coordinate>();
     }
 
     public Tile GetTile(Coordinate coordinate) => mapData[coordinate.x, coordinate.y];
 
+    #region Single모드에서 쓰던것
+    public void Tile_ClickBlock(bool isBlock)
+    {
+        foreach (var tile in mapData)
+        {
+            tile.clickBlock = isBlock;
+        }
+    }
+    public void Tile_Color_Reset()
+    {
+        foreach (var tile in mapData)
+        {
+            tile.ResetColor();
+        }
+    }
 
+    public void Can_Summon_Tile_Display(bool isDisplay)
+    {
+        foreach (var coord in canSummonPos)
+        {
+            if (isDisplay)
+            {
+                mapData[coord.x, coord.y].ColorChange_Rock(true, Color.green);
+
+            }
+            else
+            {
+                mapData[coord.x, coord.y].ColorChange_Rock(false, Color.white);
+
+            }
+            mapData[coord.x, coord.y].clickBlock = true;
+        }
+    }
+
+    #endregion
     void generateMap()
     {
-        Debug.Log("Map is Generated. ");
         map = new List<List<Tile>>();
         for (int i = 0; i < mapSize; i++)
         {
@@ -82,7 +118,16 @@ public class MapManager : MonoBehaviour
             }
             map.Add(row);
         }
-        GameManager.instance.localGamePlayerScript.ChangeLoadingStatus();
+
+        if (GameManager.instance.MultiMode)
+        {
+            GameManager.instance.localGamePlayerScript.ChangeLoadingStatus();
+        }
+
+        //if (AIManager.instance.SinglePlay)
+        //{
+        //    AIManager.instance.AI_Setting_Outpost();
+        //}
     }
 
     void MapColorChange(int x, int y, Tile tile)
@@ -145,7 +190,15 @@ public class MapManager : MonoBehaviour
         outpostCount++;
 
         tile.SetupSelectOutpost(true);
-        GameManager.instance.localGamePlayerScript.CmdSetOutpostPos(tile.coordinate.vector3Pos, isServer);
+
+        if (GameManager.instance.MultiMode)
+        {
+            GameManager.instance.localGamePlayerScript.CmdSetOutpostPos(tile.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
+        }
+        else
+        {
+            SetOutpost(tile.coordinate, true);
+        }
 
         if (outpostCount < outpostMaxCount)
         {
@@ -207,8 +260,14 @@ public class MapManager : MonoBehaviour
         {
             if (targetTile.tileState == TileState.empty)
             {
-                GameManager.instance.localGamePlayerScript.CmdMoveEffect(temp_entity.id, targetTile.coordinate.vector3Pos);
-
+                if (GameManager.instance.MultiMode)
+                {
+                    GameManager.instance.localGamePlayerScript.CmdMoveEffect(temp_entity.id, targetTile.coordinate.vector3Pos);
+                }
+                else
+                {
+                    EntityManager.instance.Target_Effect_Solver(temp_entity.id, targetTile.coordinate.vector3Pos);
+                }
                 select_tile_mode = false;
             }
         }
@@ -216,20 +275,30 @@ public class MapManager : MonoBehaviour
 
     public void SetOutpost(Coordinate coordinate, bool server)
     {
-        bool isMine = server == isServer;
-        Outpost outpost;
-        if (isMine == false)
+        bool isMine, multimode;
+        multimode = GameManager.instance.MultiMode;
+        if (multimode)
         {
-            coordinate.SetReverse(mapSize);
+            isMine = server == NetworkRpcFunc.instance.isServer;
         }
+        else
+        {
+            isMine = server;
+        }
+
+        Outpost outpost;
 
         outpost = coordinateTile(coordinate).outpost;
         coordinateTile(coordinate).OutpostSetActive(Life, isMine);
 
         if (isMine)
+        {
             player_OutpostList.Add(outpost);
+        }
         else
+        {
             opponent_OutpostList.Add(outpost);
+        }
 
         SetCanSpawnPoint(outpost, isMine);
 
@@ -244,8 +313,15 @@ public class MapManager : MonoBehaviour
             livePlayerOutpost = player_OutpostList.Count;
             liveOpponentOutpost = opponent_OutpostList.Count;
 
-            if (isServer)
+            if (multimode)
+            {
+                if (NetworkRpcFunc.instance.isServer)
+                    GameManager.instance.StartGame();
+            }
+            else
+            {
                 GameManager.instance.StartGame();
+            }
         }
     }
 
@@ -257,37 +333,81 @@ public class MapManager : MonoBehaviour
         int maxY = outpost.coordinate.y + 1;
 
         if (minX <= 0)
+        {
             minX = 0;
-
+        }
         if (minY <= 0)
+        {
             minY = 0;
-
+        }
         if (maxX >= mapSize)
+        {
             maxX = mapSize - 1;
-
+        }
         if (maxY >= mapSize)
+        {
             maxY = mapSize - 1;
+        }
 
         for (int i = minX; i <= maxX; i++)
         {
             for (int j = minY; j <= maxY; j++)
             {
-                if (isMine)
+                if (outpost.isDie == false)
                 {
-                    if (mapData[i, j].canSpawn == CanSpawn.opponentCanSpawn)
-                        mapData[i, j].canSpawn = CanSpawn.all;
+                    if (isMine)
+                    {
+                        if (mapData[i, j].canSpawn == CanSpawn.opponentCanSpawn)
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.all;
+                        }
+                        else
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.playerCanSpawn;
+                        }
 
+                        canSummonPos.Add(new Coordinate(i, j));
+                    }
                     else
-                        mapData[i, j].canSpawn = CanSpawn.playerCanSpawn;
-
+                    {
+                        if (mapData[i, j].canSpawn == CanSpawn.playerCanSpawn)
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.all;
+                        }
+                        else
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.opponentCanSpawn;
+                        }
+                        enermySummonPos.Add(new Coordinate(i, j));
+                    }
                 }
                 else
                 {
-                    if (mapData[i, j].canSpawn == CanSpawn.playerCanSpawn)
-                        mapData[i, j].canSpawn = CanSpawn.all;
+                    if (isMine)
+                    {
+                        if (mapData[i, j].canSpawn == CanSpawn.all)
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.opponentCanSpawn;
+                        }
+                        else
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.nothing;
+                        }
 
+                        canSummonPos.Remove(canSummonPos.Find(x => x.vector3Pos == new Coordinate(i,j).vector3Pos));
+                    }
                     else
-                        mapData[i, j].canSpawn = CanSpawn.opponentCanSpawn;
+                    {
+                        if (mapData[i, j].canSpawn == CanSpawn.all)
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.playerCanSpawn;
+                        }
+                        else
+                        {
+                            mapData[i, j].canSpawn = CanSpawn.nothing;
+                        }
+                        enermySummonPos.Remove(canSummonPos.Find(x => x.vector3Pos == new Coordinate(i, j).vector3Pos));
+                    }
                 }
             }
         }
@@ -326,9 +446,13 @@ public class MapManager : MonoBehaviour
         }
 
         if (outpost.isMine)
+        {
             player_OutpostList.Remove(outpost);
+        }
         else
+        {
             opponent_OutpostList.Remove(outpost);
+        }
 
         foreach (Outpost playerOutpost in player_OutpostList)
         {

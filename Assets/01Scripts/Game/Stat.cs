@@ -64,7 +64,7 @@ public class Stat
         }
         set
         {
-            var oldValue = _baseValue;
+            int oldValue = _baseValue;
             _baseValue = value;
             if (onValueChanged != null && oldValue != _baseValue)
             {
@@ -107,9 +107,29 @@ public class Stat
     /// <param name="modifier">The modifier to add.</param>
     public void AddModifier(Modifier modifier)
     {
-        var oldValue = effectiveValue;
+        int oldValue = effectiveValue;
         modifiers.Add(modifier);
         if (onValueChanged != null)
+        {
+            onValueChanged(oldValue, effectiveValue);
+        }
+    }
+
+    public void AllRemoveModifier()
+    {
+        int oldValue = effectiveValue;
+        List<Modifier> modifiersToRemove = new List<Modifier>(modifiers.Count);
+
+        var temporaryModifiers = modifiers.FindAll(x => !x.IsPermanent());
+        foreach (var modifier in temporaryModifiers)
+        {
+            modifiersToRemove.Add(modifier);
+        }
+        foreach (var modifier in modifiersToRemove)
+        {
+            modifiers.Remove(modifier);
+        }
+        if (modifiersToRemove.Count > 0 && onValueChanged != null)
         {
             onValueChanged(oldValue, effectiveValue);
         }
@@ -120,8 +140,8 @@ public class Stat
     /// </summary>
     public void OnEndTurn()
     {
-        var oldValue = effectiveValue;
-        var modifiersToRemove = new List<Modifier>(modifiers.Count);
+        int oldValue = effectiveValue;
+        List<Modifier> modifiersToRemove = new List<Modifier>(modifiers.Count);
 
         var temporaryModifiers = modifiers.FindAll(x => !x.IsPermanent());
         foreach (var modifier in temporaryModifiers)

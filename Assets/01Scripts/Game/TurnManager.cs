@@ -24,6 +24,8 @@ public class TurnManager : MonoBehaviour
     public bool myTurn;
     public bool firstTurn;
 
+    public int turnCount;
+
     [Header("Properties")]
     public bool isLoading;
 
@@ -37,6 +39,7 @@ public class TurnManager : MonoBehaviour
 
     private void Start()
     {
+        turnCount = 0;
     }
     private void Update()
     {
@@ -46,12 +49,24 @@ public class TurnManager : MonoBehaviour
 
     public void TurnSetup(int randomTurn)
     {
-        bool isServer = NetworkRpcFunc.instance.isServer;
-
-        if (randomTurn == 0)
-            myTurn = isServer;
+        bool isServer;
+        if (GameManager.instance.MultiMode)
+        {
+            isServer = NetworkRpcFunc.instance.isServer;
+            if (randomTurn == 0)
+                myTurn = isServer;
+            else
+                myTurn = !isServer;
+        }
         else
-            myTurn = !isServer;
+        {
+            myTurn = (randomTurn == 0);
+        }
+
+        if (CardManager.instance.TutorialGame)
+        {
+            myTurn = true;
+        }
 
         StartCoroutine(StartGameCo(myTurn));
     }
@@ -61,6 +76,7 @@ public class TurnManager : MonoBehaviour
         firstTurn = false;
         myTurn = !myTurn;
         StartCoroutine(StartTurnCo(myTurn));
+        turnCount++;
     }
 
     public IEnumerator StartGameCo(bool playerTurn)
@@ -78,6 +94,8 @@ public class TurnManager : MonoBehaviour
 
     public IEnumerator StartTurnCo(bool playerTurn)
     {
+        string turnMasagge = myTurn ? "Your Turn!" : "Turn End";
+
         isLoading = true;
 
         myTurn = playerTurn;
@@ -87,11 +105,13 @@ public class TurnManager : MonoBehaviour
 
         if (myTurn)
         {
-            GameManager.instance.Notification("내 턴! \n아이고 난!");
+            DarkTonic.MasterAudio.MasterAudio.PlaySound("YourTurn_01");
+            GameManager.instance.Notification("Your Turn!");
         }
         else
         {
-            GameManager.instance.Notification("상대 턴!");
+            DarkTonic.MasterAudio.MasterAudio.PlaySound("EndTurn");
+            GameManager.instance.Notification("Turn End");
         }
 
         yield return delay05;
@@ -104,7 +124,14 @@ public class TurnManager : MonoBehaviour
 
     public void StartTurn()
     {
-        GameManager.instance.localGamePlayerScript.CmdTurnEnd();
+        if (GameManager.instance.MultiMode)
+        {
+            GameManager.instance.localGamePlayerScript.CmdTurnEnd();
+        }
+        else
+        {
+            TurnEnd();
+        }
     }
 
     void TurnTimer()
@@ -112,12 +139,12 @@ public class TurnManager : MonoBehaviour
         if (currentValue > 0)
         {
             currentValue -= Time.deltaTime;
-            timeTMP.text = "남은 시간 : " + ((int)currentValue).ToString() + "s";
+            timeTMP.text = ((int)currentValue).ToString() + "s";
             if ((int)currentValue == 10 && timeWarning)
             {
                 timeWarning = false;
-                GameManager.instance.Notification("10초\n남았습니다");
-            }
+                GameManager.instance.Notification("10초\n남았습니다"); // 영어버전 필요
+            } 
         }
         else
         {

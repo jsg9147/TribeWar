@@ -9,15 +9,15 @@ public class CardMove
     List<Coordinate> canMovePositionList;
     List<Coordinate> canAttackPositionList;
 
-    public void Move(Entity targetEntity, Tile movePointTile)
+    public bool Move(Entity targetEntity, Tile movePointTile)
     {
-        if(targetEntity == null) { return; }
+        if(targetEntity == null) { return false; }
 
-        if (movePointTile.tileState != TileState.empty || targetEntity.isDie) { return; }
+        if (movePointTile.tileState != TileState.empty || targetEntity.isDie) { return false; }
 
         FindCanMovePositionList(targetEntity);
 
-        if (CanMoveCoordinate(movePointTile.coordinate) == false) { return; }
+        if (CanMoveCoordinate(movePointTile.coordinate) == false) { return false; }
 
         targetEntity.bottomTile.onEntity = null;
 
@@ -31,6 +31,7 @@ public class CardMove
         targetEntity.coordinate = movePointTile.coordinate;
         targetEntity.attackable = false;
 
+        return true;
         // PlayLogControl.instance.Log_Sorter(LogCategory.Move, targetEntity, beforeCoord);
     }
 
