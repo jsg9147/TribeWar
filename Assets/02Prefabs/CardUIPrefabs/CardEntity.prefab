@@ -528,8 +528,9 @@ MonoBehaviour:
   card:
     id: 
     name: 
+    tribeStr: 
     cost: 0
-    card_text: 
+    text: 
     role: 0
     sprite: {fileID: 0}
     state: 0

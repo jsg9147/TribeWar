@@ -25,7 +25,7 @@ public class TextController : MonoBehaviour
     }
     public void ChangeButtonLanguage()
     {
-        LocalizationData localizationData = LocalizationManager.instance.Read("LocalizationData/InGameText");
+        LocalizationData localizationData = LocalizationManager.instance.IngameText;
 
         for (int i = 0; i < localizationData.items.Count; i++)
         {

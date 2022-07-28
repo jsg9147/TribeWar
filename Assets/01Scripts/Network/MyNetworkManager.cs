@@ -33,13 +33,11 @@ public class MyNetworkManager : NetworkManager
 
             GamePlayerInstance.IsGameLeader = isGameLeader;
             GamePlayerInstance.ConnectionId = conn.connectionId;
-            GamePlayerInstance.playerNumber = GamePlayers.Count + 1;
-
-            GamePlayerInstance.playerSteamId = (ulong)SteamMatchmaking.GetLobbyMemberByIndex(SteamLobby.instance.currentLobby, GamePlayers.Count);
+            GamePlayerInstance.steamID_u = (ulong)SteamMatchmaking.GetLobbyMemberByIndex(SteamLobby.instance.currentLobby, GamePlayers.Count);
+            //GamePlayerInstance.playerNumber = GamePlayers.Count;
 
             NetworkServer.AddPlayerForConnection(conn, GamePlayerInstance.gameObject);
 
-            Debug.Log(GamePlayerInstance.playerName + " is connected. " + " player connection ID : " + GamePlayerInstance.ConnectionId.ToString() + "\nCorrent player count : " + GamePlayers.Count);
             if (quickMatch)
             {
                 if (GamePlayers.Count == minPlayers)
@@ -103,8 +101,6 @@ public class MyNetworkManager : NetworkManager
         if (numPlayers < minPlayers)
             return false;
 
-        Debug.Log("Check the game Can Started");
-
         foreach (GamePlayer player in GamePlayers)
         {
             if (!player.isPlayerLoadingComplite)
@@ -144,7 +140,8 @@ public class MyNetworkManager : NetworkManager
         {
             GamePlayer player = conn.identity.GetComponent<GamePlayer>();
 
-            if (player.playerSteamId != SteamUser.GetSteamID().m_SteamID)
+            //if (player.SteamID != SteamUser.GetSteamID().m_SteamID)
+            if (player.SteamID != SteamUser.GetSteamID())
             {
                 if (GameManager.instance != null)
                     GameManager.instance.GameResult(true);

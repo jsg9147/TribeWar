@@ -14,18 +14,12 @@ public class EndTurnBtn : MonoBehaviour
     void Start()
     {
         Setup(false);
-        if (!isTutorial)
-            SingleTurnManager.OnTurnStarted += Setup;
-        else
-            TurnManager.OnTurnStarted += Setup;
+        TurnManager.OnTurnStarted += Setup;
     }
 
     private void OnDestroy()
     {
-        if (!isTutorial)
-            SingleTurnManager.OnTurnStarted -= Setup;
-        else
-            TurnManager.OnTurnStarted -= Setup;
+        TurnManager.OnTurnStarted -= Setup;
     }
 
     public void Setup(bool isActive)
@@ -33,10 +27,5 @@ public class EndTurnBtn : MonoBehaviour
         GetComponent<Image>().sprite = isActive ? actirve : inActive;
         GetComponent<Button>().interactable = isActive;
         btnText.color = isActive ? Color.black : Color.yellow;
-    }
-
-    public void AddTrunAction()
-    {
-        SingleTurnManager.OnTurnStarted += Setup;
     }
 }

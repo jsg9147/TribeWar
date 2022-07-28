@@ -14,6 +14,7 @@ public class Card
 {
     public string id; // 이거를 이용해서 카드 위치를 찾는게 좋을듯
     public string name; // 카드 이름
+    public string tribeStr;
     public CardType cardType = new CardType(); // 카드 타입, 몬스터, 마법, 함정이 있고 moveType 이 들어있음
 
     // public TypeTest typeTest = new TypeTest();
@@ -21,7 +22,7 @@ public class Card
     public List<Stat> stats = new List<Stat>(); // 공격력과 수비력 스텟
 
     public int cost;
-    public string card_text;
+    public string text;
     public AttackType role;
 
     public Sprite sprite;
@@ -36,14 +37,31 @@ public class Card
     {
     }
 
-    public Card(JSONNode cardData)
+    public Card(JSONNode cardData, Language _language)
     {
-        this.id = cardData["id"];
-        this.name = cardData["name"];
-        this.cost = cardData["cost"];
-        this.card_text = cardData["text"];
-        if (string.IsNullOrEmpty(card_text))
-            card_text = "";
+        string card_Name, card_Text;
+        if (_language == Language.ENGLISH)
+        {
+            card_Name = "english_name";
+            card_Text = "english_text";
+        }
+        else if (_language == Language.KOREA)
+        {
+            card_Name = "korea_name";
+            card_Text = "korea_text";
+        }
+        else
+        {
+            card_Name = "english_name";
+            card_Text = "english_text";
+        }
+
+        id = cardData["id"];
+        name = cardData[card_Name];
+        cost = cardData["cost"];
+        text = cardData[card_Text];
+        if (string.IsNullOrEmpty(text))
+            text = "";
 
         string effectStr = cardData["effect"];
         string effect_target_Str = cardData["effect_target"];
@@ -93,10 +111,10 @@ public class Card
 
     public Card(Card copyCard)
     {
-        this.id = copyCard.id;
-        this.name = copyCard.name;
-        this.cost = copyCard.cost;
-        this.card_text = copyCard.card_text;
+        id = copyCard.id;
+        name = copyCard.name;
+        cost = copyCard.cost;
+        text = copyCard.text;
 
         if (copyCard.cardType != null)
         {
@@ -118,22 +136,22 @@ public class Card
     public Card DeepCopy()
     {
         Card newCard = new Card();
-        newCard.id = this.id;
-        newCard.name = this.name;
-        newCard.cost = this.cost;
-        newCard.card_text = this.card_text;
+        newCard.id = id;
+        newCard.name = name;
+        newCard.cost = cost;
+        newCard.text = text;
 
-        if (this.cardType != null)
+        if (cardType != null)
         {
-            newCard.cardType.card_category = this.cardType.card_category;
-            newCard.cardType.moveType = this.cardType.moveType;
-            newCard.cardType.tribe = this.cardType.tribe;
+            newCard.cardType.card_category = cardType.card_category;
+            newCard.cardType.moveType = cardType.moveType;
+            newCard.cardType.tribe = cardType.tribe;
         }
 
-        newCard.ability = this.ability;
-        newCard.sprite = this.sprite;
+        newCard.ability = ability;
+        newCard.sprite = sprite;
 
-        newCard.state = this.state;
+        newCard.state = state;
 
         if (cardType.card_category == CardCategory.Monster)
         {
@@ -154,27 +172,6 @@ public class Card
         stat.maxValue = 100000;
 
         stats.Add(stat);
-    }
-
-    public string TribeStr()
-    {
-        string tribe_Str;
-        switch (cardType.tribe)
-        {
-            case Tribe.Dragon:
-                tribe_Str = "드래곤";
-                break;
-            case Tribe.Magician:
-                tribe_Str = "마법사";
-                break;
-            case Tribe.Warrior:
-                tribe_Str = "전사";
-                break;
-            default:
-                tribe_Str = "일반";
-                break;
-        }
-        return tribe_Str;
     }
 
     void Set_CardRole(string role_Str)
@@ -214,7 +211,7 @@ public class Card
     #region Get Stat Values
     public int GetBaseStat(string statName)
     {
-        var stat = stats.Find(x => x.name == statName);
+        Stat stat = stats.Find(x => x.name == statName);
         return stat.baseValue;
     }
 

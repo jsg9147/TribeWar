@@ -5,7 +5,7 @@ using DG.Tweening;
 using Mirror;
 using UnityEngine.SceneManagement;
 using DarkTonic.MasterAudio;
-
+using TMPro;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance
@@ -29,6 +29,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject optionWindow;
 
     [SerializeField] CameraEffect cameraEffect;
+
+    public TMP_Text setting_Text;
+    public TMP_Text surrender_Text;
+    public TMP_Text exit_Text;
 
     public GameObject localGamePlayerObject;
     public GamePlayer localGamePlayerScript;
@@ -73,6 +77,29 @@ public class GameManager : MonoBehaviour
         menuPanel.SetActive(false);
         if(MultiMode)
             LoadingPanel.SetActive(true);
+
+        ChangeOptionLanguage();
+    }
+
+    void ChangeOptionLanguage()
+    {
+        LocalizationData localizationData = LocalizationManager.instance.Read("LocalizationData/Option");
+
+        for (int i = 0; i < localizationData.items.Count; i++)
+        {
+            if (localizationData.items[i].tag == "Setting")
+            {
+                setting_Text.text = localizationData.items[i].value;
+            }
+            if (localizationData.items[i].tag == "Surrender")
+            {
+                surrender_Text.text = localizationData.items[i].value;
+            }
+            if (localizationData.items[i].tag == "Exit")
+            {
+                exit_Text.text = localizationData.items[i].value;
+            }
+        }
     }
 
     public bool IsMine(bool isServer)
@@ -97,10 +124,10 @@ public class GameManager : MonoBehaviour
         // 추후 컴퓨터 기록도 넣을까 고민중
         if (MultiMode)
         {
-
             foreach (GamePlayer player in Game.GamePlayers)
             {
-                if (player.playerSteamId == Steamworks.SteamUser.GetSteamID().m_SteamID)
+                //if (player.SteamID == Steamworks.SteamUser.GetSteamID().m_SteamID
+                if(player.SteamID == Steamworks.SteamUser.GetSteamID())
                 {
                     profileController.SetMyProfile(player);
                 }
@@ -119,7 +146,7 @@ public class GameManager : MonoBehaviour
             .Append(EnermyInfoPanel.transform.DOMoveX(960, 1.5f)).SetEase(Ease.InCubic);
         }
 
-        Notification("본진을 \n설치 하세요");
+        Notification(LocalizationManager.instance.GetIngameText( "BaseCamp"));
         clickBlock = false;
     }
 
@@ -184,35 +211,15 @@ public class GameManager : MonoBehaviour
     public void EndTurnBtnSetup(bool isActive) => endTurnBtn.transform.GetComponent<EndTurnBtn>().Setup(isActive);
     public void Notification(string msg) => notificationPanel.Show(msg);
 
-    public void GameResult(bool gameResult, bool server)
+    public void GameResult(bool gameResult, bool server = true)
     {
-        bool isMine;
+        bool isMine = IsMine(server);
+
+        gameResult = isMine ? gameResult : !gameResult;
+
         if (MultiMode)
         {
-            isMine = NetworkRpcFunc.instance.isServer == server;
-        }
-        else
-        {
-            isMine = server;
-        }
-
-        gameResult = isMine ? !gameResult : gameResult;
-
-        if (gameEnded == false)
-        {
-            StartCoroutine(Gameover(gameResult));
-        }
-        gameEnded = true;
-    }
-
-    public void GameResult(bool gameResult)
-    {
-        if (MultiMode)
-        {
-            if (NetworkRpcFunc.instance.isClient)
-                localGamePlayerScript.CmdGameResult(gameResult, NetworkRpcFunc.instance.isServer);
-            if (NetworkRpcFunc.instance.isServer)
-                NetworkRpcFunc.instance.RpcGameResult(gameResult, NetworkRpcFunc.instance.isServer);
+            DataManager.instance.userInfo.SetResult(gameResult);
         }
 
         if (gameEnded == false)
@@ -234,19 +241,15 @@ public class GameManager : MonoBehaviour
     IEnumerator Gameover(bool gameResult)
     {
         yield return new WaitForSeconds(1f);
-        if (MultiMode == false)
-        {
-            gameResult = !gameResult;
-        }
 
         CardManager.instance.Can_Use_Effect(false);
-
         TurnManager.instance.isLoading = true;
         endTurnBtn.SetActive(false);
 
         TurnManager.instance.isLoading = true;
-        resultPanel.Show(gameResult ? "승리" : "패배");
+        resultPanel.Show(gameResult ? "WIN" : "LOSE");
         cameraEffect.SetGrayScale(!gameResult);
+
         yield return delay2;
 
         if (MultiMode)
@@ -262,7 +265,7 @@ public class GameManager : MonoBehaviour
     IEnumerator DisconnectGameover()
     {
         TurnManager.instance.isLoading = true;
-        resultPanel.Show("승리");
+        resultPanel.Show("WIN");
         cameraEffect.SetGrayScale(false);
         yield return new WaitForSeconds(1f);
         NetworkManager.loadingSceneAsync = SceneManager.LoadSceneAsync("MainMenu");
@@ -270,9 +273,9 @@ public class GameManager : MonoBehaviour
 
     public void Surrender()
     {
-        if (AIManager.instance.SinglePlay)
+        if (MultiMode)
         {
-            GameResult(true);
+            localGamePlayerScript.CmdGameResult(false, NetworkRpcFunc.instance.isServer);
         }
         else
         {

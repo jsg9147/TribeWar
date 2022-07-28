@@ -33,7 +33,7 @@ public class NetworkRpcFunc : NetworkBehaviour
     [ClientRpc]
     public void RpcCardMove(int entityID, Vector3 movePos, bool server)
     {
-        EntityManager.instance?.CardMove(entityID, SetCoordinate(movePos, server), server);
+        EntityManager.instance.CardMove(entityID, SetCoordinate(movePos, server), server);
     }
 
     [ClientRpc]
@@ -63,13 +63,13 @@ public class NetworkRpcFunc : NetworkBehaviour
     public void RpcRandomTargetEffect(int entity_id, string card_id) => EntityManager.instance?.RandomTargetEffect(entity_id, card_id);
 
     [ClientRpc]
-    public void RpcTarget_Effect_Solver(int entityID, Vector3 tilePos) => EntityManager.instance?.Target_Effect_Solver(entityID, tilePos);
+    public void RpcTarget_Effect_Solver(int entityID, Vector3 tilePos, bool isServer) => EntityManager.instance?.Target_Effect_Solver(entityID, tilePos, isServer);
 
     #endregion
 
     #region Game Manager
     [ClientRpc]
-    public void RpcGameResult(bool gameResult, bool server) => GameManager.instance?.GameResult(gameResult, server);
+    public void RpcGameResult(bool gameResult, bool server) => GameManager.instance.GameResult(gameResult, server);
 
     [ClientRpc]
     public void RpcLoadingComplite()

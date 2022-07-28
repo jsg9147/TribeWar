@@ -7,6 +7,9 @@ using TMPro;
 
 public class GameOption : MonoBehaviour
 {
+    public GameObject menuPanel;
+    public GameObject optionWindow;
+
     [Header("텍스트 모음")]
     [SerializeField] TMP_Text resolution_text;
     [SerializeField] TMP_Text language_text;
@@ -17,7 +20,6 @@ public class GameOption : MonoBehaviour
     [SerializeField] Toggle fullscreenBtn;
 
     List<Resolution> resolutions = new List<Resolution>();
-    [SerializeField] FullScreenMode screenMode;
 
     [SerializeField] Slider soundSlider;
     [SerializeField] TMP_Text soundValue_Text;
@@ -25,12 +27,18 @@ public class GameOption : MonoBehaviour
     int languageIndex;
     float masterVolume;
 
-
     private void Start()
     {
         InitUI();
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            optionWindow.SetActive(false);
+        }
+    }
     void SetResolution()
     {
         int setWidth = 1600;
@@ -88,7 +96,7 @@ public class GameOption : MonoBehaviour
         resolutions.Reverse();
 
         int optionNum = 0;
-        foreach (var item in resolutions)
+        foreach (Resolution item in resolutions)
         {
             TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData();
             option.text = item.ToString().Split('@')[0];
@@ -103,7 +111,7 @@ public class GameOption : MonoBehaviour
         }
         resolutionDropdown.RefreshShownValue();
 
-        fullscreenBtn.isOn = Screen.fullScreenMode.Equals(FullScreenMode.FullScreenWindow) ? true : false;
+        //fullscreenBtn.isOn = Screen.fullScreenMode.Equals(FullScreenMode.FullScreenWindow) ? true : false;
 
         languageDropdown.value = languageIndex;
 
@@ -141,10 +149,10 @@ public class GameOption : MonoBehaviour
         languageIndex = x.value;
     }
 
-    public void FullScreenBtn(bool isFull)
-    {
-        screenMode = isFull ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
-    }
+    //public void FullScreenBtn(bool isFull)
+    //{
+    //    screenMode = isFull ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
+    //}
 
     public void AdjustVolume(float newVolume)
     {
@@ -169,29 +177,38 @@ public class GameOption : MonoBehaviour
     {
         try
         {
-            Screen.SetResolution(resolutions[resolutionNum].width, resolutions[resolutionNum].height, screenMode);
+            Screen.SetResolution(resolutions[resolutionNum].width, resolutions[resolutionNum].height, FullScreenMode.Windowed);
         }
         catch(System.ArgumentException ex)
         {
             Debug.Log(ex);
         }
+
+        LocalizationManager.instance.LanguageSet();
+
         PlayerPrefs.SetInt("TribeWar_Language", languageIndex);
         
         Text_Language_Refresh();
+        LocalizationManager.instance.ChangeTextLanguage();
         PlayerPrefs.SetFloat("TribeWar_Sound", AudioListener.volume);
 
         if (SceneManager.GetActiveScene().buildIndex == 0)
         {
             LobbyUI.instance.LanguageChange_Button();
             LobbyUI.instance.OptionButton();
+            DataManager.instance.ChangeCardText(languageIndex);
         }
-        else if (SceneManager.GetActiveScene().buildIndex == 1)
+        else
         {
+            DataManager.instance.ChangeCardText(languageIndex);
             TextController.instance.ChangeButtonLanguage();
         }
-        else if (SceneManager.GetActiveScene().buildIndex == 2)
+        menuPanel.SetActive(false);
+        optionWindow.SetActive(false);
+
+        if (GameManager.instance != null)
         {
-            //튜토리얼 텍스트 변경 넣어야함
+            GameManager.instance.clickBlock = false;
         }
     }
 }

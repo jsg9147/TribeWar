@@ -8,9 +8,4 @@ public class DestroyCardEntityEffect : CardDestroyEffect
     {
         entity.isDie = true;
     }
-
-    public override void Resolve(SingleEntity entity)
-    {
-        entity.isDie = true;
-    }
 }

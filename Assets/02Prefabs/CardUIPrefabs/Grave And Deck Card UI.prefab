@@ -784,8 +784,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e12a7fe825153ce4b8567470cfa84cee, type: 3}
   - {fileID: 21300000, guid: 7e9e1ee3fd5e3db4289d9539d43c7a88, type: 3}
   - {fileID: 21300000, guid: 091988fd3e84cfa49b461f13879073a6, type: 3}
-  - {fileID: 21300000, guid: 091988fd3e84cfa49b461f13879073a6, type: 3}
-  - {fileID: 21300000, guid: 091988fd3e84cfa49b461f13879073a6, type: 3}
+  - {fileID: 21300000, guid: 75dce29b8662dfb4296f070a851cb9d7, type: 3}
+  - {fileID: 21300000, guid: f17092dce77368944bbf4d82e2a3cfb2, type: 3}
   cardFrame_Image: {fileID: 3167001997705010301}
   classIcon_Image: {fileID: 3008465388544636782}
   nameTMP: {fileID: 3008465387581538646}
@@ -797,8 +797,9 @@ MonoBehaviour:
   card:
     id: 
     name: 
+    tribeStr: 
     cost: 0
-    card_text: 
+    text: 
     role: 0
     sprite: {fileID: 0}
     state: 0

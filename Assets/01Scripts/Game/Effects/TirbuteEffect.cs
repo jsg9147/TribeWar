@@ -33,7 +33,6 @@ public class TributeMagicEffect : TributeBaseEffect
 
     public override void Resolve(EntityManager entityManager, Card card, bool isMine)
     {
-        Debug.Log(value);
         if (entityManager.tribeTributeCount.ContainsKey(card.cardType.tribe))
         {
             entityManager.tribeTributeCount[card.cardType.tribe] = entityManager.tribeTributeCount[card.cardType.tribe] + value;

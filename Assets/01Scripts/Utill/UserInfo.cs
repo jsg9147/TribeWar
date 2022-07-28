@@ -29,4 +29,16 @@ public class UserInfo
 
         return winRate;
     }
+
+    public void SetResult(bool isWin)
+    {
+        if (isWin)
+        {
+            Win++;
+        }
+        else
+        {
+            Lose++;
+        }
+    }
 }

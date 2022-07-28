@@ -31,6 +31,8 @@ public class SteamLobby : MonoBehaviour
     bool _joinCodeRoom;
     bool _createLobby;
 
+    bool isMatch = false;
+
     struct LobbyMetaData
     {
         public string m_Key;
@@ -115,6 +117,8 @@ public class SteamLobby : MonoBehaviour
     public void LeaveLobby()
     {
         Debug.Log("Leave lobby");
+        _createLobby = false;
+
         if (currentLobby != null)
         {
             SteamMatchmaking.LeaveLobby(currentLobby);
@@ -125,6 +129,7 @@ public class SteamLobby : MonoBehaviour
 
     public void GetListOfLobbies(bool joinCodeRoom)
     {
+        print("Get List of Lobbies");
         if (lobbyIDS.Count > 0)
             lobbyIDS.Clear();
 
@@ -182,6 +187,7 @@ public class SteamLobby : MonoBehaviour
 
     private void OnLobbyEntered(LobbyEnter_t callback)
     {
+        isMatch = true;
         currentLobby = new CSteamID(callback.m_ulSteamIDLobby);
         if (NetworkServer.active) { return; }
 
@@ -197,33 +203,55 @@ public class SteamLobby : MonoBehaviour
 
     void OnGetLobbiesList(LobbyMatchList_t result)
     {
-        string value;
+        StartCoroutine(GetLobbiesList(result));
+    }
 
-        value = _joinCodeRoom ? joinCode_InputText.text : GameKey;
-
-        for (int i = 0; i < result.m_nLobbiesMatching; i++)
+    IEnumerator GetLobbiesList(LobbyMatchList_t result)
+    {
+        if (isMatch == false)
         {
-            CSteamID lobbyID = SteamMatchmaking.GetLobbyByIndex(i);
+            string value;
 
-            if (SteamMatchmaking.GetLobbyData((CSteamID)lobbyID.m_SteamID, value) == GameValue)
+            value = _joinCodeRoom ? joinCode_InputText.text : GameKey;
+
+            for (int i = 0; i < result.m_nLobbiesMatching; i++)
             {
-                lobbyIDS.Add(lobbyID);
-                SteamMatchmaking.RequestLobbyData(lobbyID);
+                CSteamID lobbyID = SteamMatchmaking.GetLobbyByIndex(i);
+                if (SteamMatchmaking.GetLobbyData((CSteamID)lobbyID.m_SteamID, value) == GameValue)
+                {
+                    if (SteamMatchmaking.RequestLobbyData(lobbyID))
+                    {
+                        lobbyIDS.Add(lobbyID);
+                    }
+                }
+            }
+
+            if (!_joinCodeRoom && lobbyIDS.Count == 0)
+            {
+                MatchManager.instance.CreateNewLobby();
             }
         }
-
-        if (!_joinCodeRoom && lobbyIDS.Count == 0)
+        else
         {
-            MatchManager.instance.CreateNewLobby();
+            yield return new WaitForSeconds(3f);
+            isMatch = false;
+            LeaveLobby();
+            networkManager.StopHost();
+            networkManager.StopClient();
+
+            // 문제 있을꺼 같아서 잠시 삭제
+
+            OnGetLobbiesList(result);
         }
     }
 
     void OnGetLobbyInfo(LobbyDataUpdate_t result)
-    {
+    {;
         if (_createLobby || lobbyIDS.Count == 0)
         {
             return;
         }
+
         GameObject roomScreen = GameObject.Find("RoomScreen");
 
         if (roomScreen != null)
@@ -242,7 +270,6 @@ public class SteamLobby : MonoBehaviour
                 Debug.LogError(ex);
             }
         }
-
         
         MatchManager.instance.AutoJoinLobby(lobbyIDS, result, _joinCodeRoom);
     }
@@ -257,9 +284,10 @@ public class SteamLobby : MonoBehaviour
 
     public void StopMatching()
     {
+        isMatch = false;
         LeaveLobby();
-        LobbyUI.instance.StartButtonClick();
         networkManager.StopHost();
         networkManager.StopClient();
+        LobbyUI.instance.StartButtonClick();
     }
 }

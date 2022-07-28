@@ -46,17 +46,12 @@ public class AIManager : MonoBehaviour
 
             TurnManager.OnTurnStarted += TurnEndSetup;
         }
-        
     }
 
-    public void HandRefresh()
-    {
-        
-    }
     public void Entity_Active(List<Entity> allEntities)
     {
         List<Entity> entities = new List<Entity>();
-        foreach (var entity in allEntities)
+        foreach (Entity entity in allEntities)
         {
             if (entity.belong == EntityBelong.AI)
             {
@@ -64,12 +59,13 @@ public class AIManager : MonoBehaviour
             }
         }
 
-        int randomIndex = Random.Range(0, entities.Count - 1);
+        int randomIndex = Random.Range(0, entities.Count);
         
         for (int i = 0; i < entities.Count; i++)
         {
+            Debug.Log($"엔티티 개수 : {entities.Count}, 인덱스 : {randomIndex}, 문제 확인용 인덱스 문제가 있음");
             Random_Active(entities[randomIndex], true);
-            randomIndex = Random.Range(0, entities.Count - 1);
+            randomIndex = Random.Range(0, entities.Count);
         }
     }
 
@@ -189,18 +185,18 @@ public class AIManager : MonoBehaviour
 
             if (attackEntity[randomIndex].attackable)
             {
-                Random_Active(attackEntity[i], false);
+                Random_Active(attackEntity[randomIndex], false);
                 actionCount++;
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(2f);
             }
 
-            if (actionCount >= entityManager.maxMoveCount)
+            if (actionCount >= entityManager.MaxMoveCount)
             {
                 break;
             }
         }
 
-        if (actionCount < entityManager.maxMoveCount)
+        if (actionCount < entityManager.MaxMoveCount)
         {
             for (int i = 0; i < attackableEntities.Count; i++)
             {
@@ -210,16 +206,15 @@ public class AIManager : MonoBehaviour
                 {
                     Random_Active(attackableEntities[randomIndex], false);
                     actionCount++;
-                    yield return new WaitForSeconds(1f);
+                    yield return new WaitForSeconds(2f);
                 }
 
-                if (actionCount >= entityManager.maxMoveCount)
+                if (actionCount >= entityManager.MaxMoveCount)
                 {
                     break;
                 }
             }
         }
-
         turnManager.StartTurn();
     }
 
@@ -252,9 +247,12 @@ public class AIManager : MonoBehaviour
     void Random_Active(Entity entity, bool isNeutrality)
     {
         List<Coordinate> canMovePos = cardMove.Can_Attack_Position(entity);
-        int randomIndex = Random.Range(0, canMovePos.Count - 1);
+        int randomIndex = Random.Range(0, canMovePos.Count);
         List<Entity> targetEntities = new List<Entity>();
         List<Outpost> targetOutposts = new List<Outpost>();
+
+        if (canMovePos.Count <= 0 && entity.belong != EntityBelong.AI)
+            return;
 
         foreach (Coordinate pos in canMovePos)
         {
@@ -262,7 +260,7 @@ public class AIManager : MonoBehaviour
             {
                 if (isNeutrality)
                 {
-                    if (mapManager.GetTile(pos).onEntity != null && mapManager.GetTile(pos).onEntity.belong != EntityBelong.AI)
+                    if (mapManager.GetTile(pos).onEntity != null && mapManager.GetTile(pos).onEntity.belong != entity.belong)
                     {
                         targetEntities.Add(mapManager.GetTile(pos).onEntity);
                     }
@@ -273,11 +271,11 @@ public class AIManager : MonoBehaviour
                 }
                 else
                 {
-                    if (mapManager.GetTile(pos).onEntity != null && mapManager.GetTile(pos).onEntity.belong == EntityBelong.Player)
+                    if (mapManager.GetTile(pos).onEntity != null && mapManager.GetTile(pos).onEntity.belong != entity.belong)
                     {
                         targetEntities.Add(mapManager.GetTile(pos).onEntity);
                     }
-                    else if (mapManager.GetTile(pos).outpost.life > 0 && mapManager.GetTile(pos).outpost.belong == EntityBelong.Player)
+                    else if (mapManager.GetTile(pos).outpost.life > 0 && mapManager.GetTile(pos).outpost.belong != entity.belong)
                     {
                         targetOutposts.Add(mapManager.GetTile(pos).outpost);
                     }
@@ -293,25 +291,25 @@ public class AIManager : MonoBehaviour
             {
                 if (randomBool)
                 {
-                    Outpost target = targetOutposts[Random.Range(0, targetEntities.Count - 1)];
+                    Outpost target = targetOutposts[Random.Range(0, targetEntities.Count)];
                     gameManager.localGamePlayerScript.CmdOutpostAttack(entity.id, target.coordinate.vector3Pos, true);
                 }
                 else
                 {
-                    Entity target = targetEntities[Random.Range(0, targetEntities.Count - 1)];
+                    Entity target = targetEntities[Random.Range(0, targetEntities.Count)];
                     gameManager.localGamePlayerScript.CmdAttack(entity.id, target.id, true);
                 }
             }
 
             else if (targetOutposts.Count > 0)
             {
-                Outpost target = targetOutposts[Random.Range(0, targetEntities.Count - 1)];
+                Outpost target = targetOutposts[Random.Range(0, targetEntities.Count)];
                 gameManager.localGamePlayerScript.CmdOutpostAttack(entity.id, target.coordinate.vector3Pos, true);
             }
 
             else if (targetEntities.Count > 0)
             {
-                Entity target = targetEntities[Random.Range(0, targetEntities.Count - 1)];
+                Entity target = targetEntities[Random.Range(0, targetEntities.Count)];
                 gameManager.localGamePlayerScript.CmdAttack(entity.id, target.id, true);
             }
             else
@@ -327,25 +325,25 @@ public class AIManager : MonoBehaviour
                 bool randomBool = (Random.value > 0.5f);
                 if (randomBool)
                 {
-                    Outpost target = targetOutposts[Random.Range(0, targetEntities.Count - 1)];
+                    Outpost target = targetOutposts[Random.Range(0, targetOutposts.Count)];
                     entityManager.OutpostAttack(entity.id, target.coordinate, true);
                 }
                 else
                 {
-                    Entity target = targetEntities[Random.Range(0, targetEntities.Count - 1)];
+                    Entity target = targetEntities[Random.Range(0, targetEntities.Count)];
                     entityManager.Attack(entity.id, target.id, true);
                 }
             }
 
             else if (targetOutposts.Count > 0)
             {
-                Outpost target = targetOutposts[Random.Range(0, targetEntities.Count - 1)];
+                Outpost target = targetOutposts[Random.Range(0, targetOutposts.Count)];
                 entityManager.OutpostAttack(entity.id, target.coordinate, true);
             }
 
             else if (targetEntities.Count > 0)
             {
-                Entity target = targetEntities[Random.Range(0, targetEntities.Count - 1)];
+                Entity target = targetEntities[Random.Range(0, targetEntities.Count)];
                 entityManager.Attack(entity.id, target.id, true);
             }
             else
@@ -388,7 +386,8 @@ public class AIManager : MonoBehaviour
     Coordinate MinDistanceCoord(List<Coordinate> canMovePos)
     {
         List<Coordinate> enermiesPos = new List<Coordinate>();
-        Coordinate minCoord = canMovePos[Random.Range(0, canMovePos.Count)];
+        int rand = Random.Range(0, canMovePos.Count);
+        Coordinate minCoord = canMovePos[rand];
 
         int minDistance = 100;
 

@@ -11,9 +11,8 @@ public class GamePlayer : NetworkBehaviour
 
     [Header("GamePlayer Info")]
     [SyncVar(hook = nameof(HandlePlayerNameUpdate))] public string playerName;
-    [SyncVar] public int iImage;
     [SyncVar] public int ConnectionId;
-    [SyncVar] public int playerNumber;
+    [SyncVar(hook = nameof(HandlePlayerSetSteamID))] public ulong steamID_u;
     [SyncVar(hook = nameof(HandlePlayerWinUpdate))] public int playerWin;
     [SyncVar(hook = nameof(HandlePlayerLoseUpdate))] public int playerLose;
     [SyncVar(hook = nameof(HandlePlayerWinRateUpdate))] public float playerWinRate;
@@ -24,7 +23,9 @@ public class GamePlayer : NetworkBehaviour
     [SyncVar] public bool IsGameLeader = false;
     [SyncVar(hook = nameof(HandlePlayerLoadingStatusChange))] public bool isPlayerLoadingComplite;
     [SyncVar(hook = nameof(HandlePlayerReadyStatusChange))] public bool isPlayerReady;
-    [SyncVar(hook = nameof(HandleProfileIcon))] public ulong playerSteamId;
+    //[SyncVar(hook = nameof(HandlePlayerSetSteamID))] public int lobbyMemberIndex;
+    public CSteamID SteamID;
+    //[SyncVar(hook = nameof(HandlePlayerSteamID))] public ulong SteamID;
     PlayerProfile profile;
 
     [Header("Play Info")]
@@ -50,14 +51,12 @@ public class GamePlayer : NetworkBehaviour
             return game = MyNetworkManager.singleton as MyNetworkManager;
         }
     }
-
     
-
+    //여기다
     public override void OnStartAuthority()
     {
         UserInfo userInfo = DataManager.instance.userInfo;
-
-        CmdSetPlayerName(SteamFriends.GetPersonaName().ToString());
+        CmdSetPlayerInfo(SteamFriends.GetPersonaName().ToString());
         CmdSetPlayerRecord(userInfo.Win, userInfo.Lose, userInfo.WinRate());
         gameObject.name = "LocalGamePlayer";
         MatchManager.instance.FindLocalGamePlayer(this);
@@ -70,19 +69,20 @@ public class GamePlayer : NetworkBehaviour
         HandlePlayerWinUpdate(playerWin, win);
         HandlePlayerLoseUpdate(playerLose, lose);
         HandlePlayerWinRateUpdate(playerWinRate, winRate);
-
+        CreatePlayerProfiles();
     }
 
     public void CreatePlayerProfiles()
     {
         if (isCreate) { return; }
-
+        
         GameObject playerSlot = GameObject.Find("RoomPlayer Slot");
         if (SceneManager.GetActiveScene().name == "MainMenu")
         {
             profile = Instantiate(playerProfilePrefabs);
-            profile.PlayerProfileUpdate(playerWin, playerLose, playerWinRate, playerName, SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId)), hasAuthority);
-            iImage = SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId));
+            profile.PlayerProfileUpdate(playerWin, playerLose, playerWinRate, playerName, SteamFriends.GetLargeFriendAvatar(SteamID), hasAuthority);
+            //profile.PlayerProfileUpdate(playerWin, playerLose, playerWinRate, playerName, SteamFriends.GetLargeFriendAvatar(new CSteamID(SteamID)), hasAuthority);
+            
             if (playerSlot != null)
             {
                 profile.transform.SetParent(playerSlot.transform);
@@ -92,10 +92,15 @@ public class GamePlayer : NetworkBehaviour
         }
     }
 
-    public void HandleProfileIcon(ulong oldValue, ulong newValue)
-    {
-        profile?.SetProfileIcon(SteamFriends.GetMediumFriendAvatar(new CSteamID(playerSteamId)));
-    }
+    //public void HandlePlayerSteamID(ulong oldValue, ulong newValue)
+    //{
+    //    if (isServer)
+    //    {
+    //        SteamID = newValue;
+    //    }
+
+    //    profile?.SetProfileIcon(SteamFriends.GetLargeFriendAvatar(new CSteamID(SteamID)));
+    //}
 
     public void HandlePlayerWinUpdate(int oldValue, int newValue)
     {
@@ -113,12 +118,17 @@ public class GamePlayer : NetworkBehaviour
     {
         if (isServer)
             playerWinRate = newValue;
+    }
+    public void HandlePlayerSetSteamID(ulong oldValue, ulong newValue)
+    {
+        if (isServer)
+            steamID_u = newValue;
 
-        CreatePlayerProfiles();
+        SteamID = new CSteamID(steamID_u);
     }
 
     [Command]
-    private void CmdSetPlayerName(string playerName)
+    private void CmdSetPlayerInfo(string playerName)
     {
         HandlePlayerNameUpdate(this.playerName, playerName);
     }
@@ -136,8 +146,8 @@ public class GamePlayer : NetworkBehaviour
     {
         if (isServer)
             playerName = newValue;
-
     }
+
     public void ChangeLoadingStatus()
     {
         if (hasAuthority)
@@ -326,9 +336,9 @@ public class GamePlayer : NetworkBehaviour
     }
 
     [Command]
-    public void CmdMoveEffect(int entity_Id, Vector3 tilePos)
+    public void CmdMoveEffect(int entity_Id, Vector3 tilePos, bool server)
     {
-        NetworkRpcFunc.instance.RpcTarget_Effect_Solver(entity_Id, tilePos);
+        NetworkRpcFunc.instance.RpcTarget_Effect_Solver(entity_Id, tilePos, server);
     }
 
 

@@ -17,6 +17,9 @@ public class Ability
     public List<Effect> effects = new List<Effect>();
     public Target target;
 
+    // 효과를 지정해서 사용하냐는 뜻
+    public bool targetEffect = false;
+
     public string targetID = "";
 
     public void SetEffectSubject(string effectTargetStr)
@@ -25,6 +28,10 @@ public class Ability
         {
             case "target":
                 target = new TargetCard();
+                break;
+            case "player_card":
+                target = new PlayerCard();
+                targetEffect = true;
                 break;
             case "random":
                 target = new RandomCard();
@@ -40,9 +47,11 @@ public class Ability
                 break;
             case "tribe_target":
                 target = new TribeTarget();
+                targetEffect = true;
                 break;
             case "target_warrior":
                 target = new TribeTarget();
+                targetEffect = true;
                 break;
             case "player":
                 target = new PlayerTarget();
@@ -73,7 +82,6 @@ public class Ability
             return;
 
         Tag = effectStr;
-
         switch (effectStr.Split('.')[0])
         {
             case "destroy":
@@ -103,7 +111,7 @@ public class Ability
                 break;
 
             case "move":
-                var monsterMoveEffect = new MonsterMoveEffect();
+                MoveEffect monsterMoveEffect = new MoveEffect();
                 monsterMoveEffect.effectClass = EffectClass.move;
                 effects.Add(monsterMoveEffect);
                 monsterMoveEffect.value = Int32.Parse(effectStr.Split('.')[1]);

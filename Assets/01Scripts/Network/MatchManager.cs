@@ -44,8 +44,9 @@ public class MatchManager : MonoBehaviour
 
     public void MatchingStart()
     {
-        Debug.Log("Looking for opponent ...");
+        SteamLobby.instance.StopMatching();
         SteamLobby.instance.GetListOfLobbies(false);
+        Debug.Log("Looking for opponent ...");
     }
 
     public void JoinCodeRoom()

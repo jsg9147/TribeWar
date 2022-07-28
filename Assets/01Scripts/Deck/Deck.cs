@@ -26,25 +26,21 @@ public class Deck
         this.representCard = representCard;
     }
 
-    public Deck CloneDeck()
-    {
-        Deck clone = (Deck)this.MemberwiseClone();
-        clone.index = new int();
-        //clone.cardCount = new Dictionary<string, int>(this.cardCount);
-        return clone;
-    }
-
     public void SetCard(Card card, int count = 1)
     {
         //cardCount.Add(card.id, count);
         cards.Add(card.id);
     }
 
-    public void DeckPaste(Deck deck)
+    public Deck DeepCopy()
     {
-        this.name = deck.name;
-        this.index = deck.index;
-        this.representCard = deck.representCard;
+        Deck newDeck = new Deck();
+        newDeck.name = this.name;
+        newDeck.index = this.index;
+        newDeck.cards = cards.ToList();
+        newDeck.representCard = this.representCard;
+
+        return newDeck;
     }
 
     public void Init()
@@ -54,19 +50,11 @@ public class Deck
         representCard = "";
     }
 
+    // 수정 필요 randNum 카드 빼고 하면 범위를 넘어감
     public void Random_Represent_Card()
     {
-        List<string> card_ids = new List<string>();
-
-        foreach (var card_id in cards)
-        {
-            card_ids.Add(card_id);
-        }
-        card_ids = card_ids.Distinct().ToList();
-
-        int randNum = Random.Range(0, card_ids.Count);
-
-        representCard = card_ids[randNum];
+        int randNum = Random.Range(0, cards.Count);
+        representCard = cards[randNum];
     }
 
     public void RemoveCard(Card card)
@@ -78,7 +66,7 @@ public class Deck
     public int CardCount(string card_id)
     {
         int count = 0;
-        foreach (var card in cards)
+        foreach (string card in cards)
         {
             if (card == card_id)
             {

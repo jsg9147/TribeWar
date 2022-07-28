@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using DarkTonic.MasterAudio;
 public class CardMove
 {
     CardPossibleMove cardPossibleMove = new CardPossibleMove();
@@ -18,7 +19,6 @@ public class CardMove
         FindCanMovePositionList(targetEntity);
 
         if (CanMoveCoordinate(movePointTile.coordinate) == false) { return false; }
-
         targetEntity.bottomTile.onEntity = null;
 
         movePointTile.onEntity = targetEntity;
@@ -31,6 +31,7 @@ public class CardMove
         targetEntity.coordinate = movePointTile.coordinate;
         targetEntity.attackable = false;
 
+        MasterAudio.PlaySound("cardSlide8");
         return true;
         // PlayLogControl.instance.Log_Sorter(LogCategory.Move, targetEntity, beforeCoord);
     }
@@ -62,7 +63,6 @@ public class CardMove
     public List<Coordinate> Can_Attack_Position(Entity fieldCard)
     {
         canAttackPositionList = new List<Coordinate>();
-
         switch (fieldCard.card.cardType.moveType)
         {
             case MoveType.Rook:
@@ -85,10 +85,12 @@ public class CardMove
 
     bool CanMoveCoordinate(Coordinate coordinate)
     {
-        foreach(var canMove_Coordinate in canMovePositionList)
+        foreach(Coordinate canMove_Coordinate in canMovePositionList)
         {
             if (canMove_Coordinate.vector3Pos == coordinate.vector3Pos)
+            {
                 return true;
+            }
         }
         return false;
     }

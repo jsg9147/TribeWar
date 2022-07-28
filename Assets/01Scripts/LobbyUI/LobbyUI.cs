@@ -5,22 +5,25 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using DG.Tweening;
 using DarkTonic.MasterAudio;
+
 public class LobbyUI : MonoBehaviour
 {
     public static LobbyUI instance;
 
-    public DeckEditor editor;
+    public DeckManager deckManager;
 
     public GameObject mainScreen;
     public GameObject playScreen;
     public GameObject myDeckScreen;
     public GameObject deckEditor;
     public GameObject shopScreen;
-    public GameObject roomScreen;
+    public RoomScreen roomScreen;
     public GameObject optionPanel;
     public GameObject noExistDeckWindow;
 
     public GameObject matchLoadingWindow;
+
+    public GameObject deckNoticePanel;
 
     public Transform cardInfo_Main_Layout;
     [Header("도움말 UI")]
@@ -38,7 +41,6 @@ public class LobbyUI : MonoBehaviour
 
     [Header("한글 버튼 이미지")]
     public List<Sprite> koreaBtns;
-
 
     private void Start()
     {
@@ -62,7 +64,7 @@ public class LobbyUI : MonoBehaviour
         deckEditor.SetActive(false);
         myDeckScreen.SetActive(false);
         shopScreen.SetActive(false);
-        roomScreen.SetActive(false);
+        roomScreen.gameObject.SetActive(false);
         noExistDeckWindow.SetActive(false);
     }
 
@@ -100,12 +102,18 @@ public class LobbyUI : MonoBehaviour
         myDeckScreen.SetActive(true);
     }
 
+    public void DeckNoticeWindow()
+    {
+        ClickSound();
+        deckNoticePanel.SetActive(!deckNoticePanel.activeSelf);
+    }
+
     public void SelectEditMyDeck(Deck deck)
     {
         ScreenClear();
-
         deckEditor.SetActive(true);
-        editor.Edit_Deck_Setup(deck);
+        deckManager.Edit_Deck_Setup(deck);
+        deckManager.ChangeLanguage();
     }
 
     public void ShopButtonClick()
@@ -119,7 +127,7 @@ public class LobbyUI : MonoBehaviour
     {
         ClickSound();
         ScreenClear();
-        roomScreen.SetActive(true);
+        roomScreen.gameObject.SetActive(true);
     }
 
     public void OptionButton()
@@ -174,9 +182,10 @@ public class LobbyUI : MonoBehaviour
                 Debug.Log(exception.Message + "\nLanguage Setting is wrong");
             }
         }
-
         playScreen.GetComponent<PlayScreen>().ChangeButtonLanguage();
-        roomScreen.GetComponent<RoomScreen>().ChangeButtonLanguage();
+        roomScreen.ChangeButtonLanguage();
+        helpPanel.GetComponent<HelpScreen>().ChangeLanguage();
+        deckManager.ChangeLanguage();
     }
 
 
@@ -239,6 +248,6 @@ public class LobbyUI : MonoBehaviour
 
     public void NoExsitDeck_OKClick()
     {
-        DeckEditor.instance.AddDeckButtonClick();
+        DeckManager.instance.AddDeckButtonClick();
     }
 }

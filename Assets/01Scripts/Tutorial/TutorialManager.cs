@@ -32,6 +32,7 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] Image step1_arrow1;
     [SerializeField] Image step1_arrow2;
     [SerializeField] GameObject textObj;
+    [SerializeField] TMP_Text create_basecamp_Text;
 
     [SerializeField][Header("Step2 몬스터 소환")] GameObject step2_Panel;
 
@@ -92,6 +93,9 @@ public class TutorialManager : MonoBehaviour
         textData = LocalizationManager.instance.Read("LocalizationData/Tutorial");
         StartCoroutine(TutorialStart());
         FadeoutEffect(textArrow);
+        create_basecamp_Text.text = textData.items[53].value;
+        step4_text.text = textData.items[54].value;
+
     }
 
     IEnumerator TutorialStart()
@@ -116,8 +120,8 @@ public class TutorialManager : MonoBehaviour
         yield return new WaitWhile(() => tutorialStep < 5);
 
         StartCoroutine(Step6());
-        yield return new WaitWhile(() => tutorialStep < 6);
-        StartCoroutine(Step7());
+        //yield return new WaitWhile(() => tutorialStep < 6);
+        //StartCoroutine(Step7());
 
     }
 
@@ -186,6 +190,7 @@ public class TutorialManager : MonoBehaviour
         GameManager.LoadingComplited();
         //GameManager.instance.StartGame();
 
+        endTurnBtn.Setup(false);
         Step1_Arrow_Active(false);
         Base_Panel_SetActive(true);
 
@@ -231,7 +236,6 @@ public class TutorialManager : MonoBehaviour
         GameManager.instance.clickBlock = true;
         MapManager.instance.Tile_ClickBlock(false);
         step1_Panel.gameObject.SetActive(false);
-        endTurnBtn.Setup(false);
 
         step2_Panel.SetActive(true);
         MapManager.instance.Tile_Color_Reset();
@@ -297,7 +301,7 @@ public class TutorialManager : MonoBehaviour
         FadeoutEffect(step2_arrow3);
 
 
-        yield return new WaitWhile(() => EntityManager.instance.summonCount > 0);
+        yield return new WaitWhile(() => EntityManager.instance.summonCount > EntityManager.instance.MaxSummonCount - 2);
 
         MapManager.instance.Can_Summon_Tile_Display(false);
         MapManager.instance.Tile_ClickBlock(false);
@@ -318,7 +322,7 @@ public class TutorialManager : MonoBehaviour
         yield return new WaitWhile(() => textStep < 9);
         Base_Panel_SetActive(false);
 
-        foreach (var hand in CardManager.instance.playerCards)
+        foreach (Hand hand in CardManager.instance.playerCards)
         {
             hand.clickBlock = true;
         }
@@ -349,18 +353,17 @@ public class TutorialManager : MonoBehaviour
         EntityManager.instance.Summon(false, "base-001", summonPos);
 
         yield return new WaitForSeconds(short_Time);
-
         TurnManager.instance.TurnEnd();
-        foreach (var hand in CardManager.instance.playerCards)
+        endTurnBtn.Setup(false);
+        foreach (Hand hand in CardManager.instance.playerCards)
         {
             hand.clickBlock = true;
         }
-        endTurnBtn.Setup(false);
         yield return new WaitForSeconds(2f);
 
         Base_Panel_SetActive(true);
 
-        foreach (var hand in CardManager.instance.playerCards)
+        foreach (Hand hand in CardManager.instance.playerCards)
         {
             hand.clickBlock = true;
         }
@@ -386,14 +389,14 @@ public class TutorialManager : MonoBehaviour
         FadeoutEffect(middle_Arrow, true);
         middle_Arrow.gameObject.SetActive(false);
 
-        card_UI.Setup(DataManager.instance.CardData("base-003"));
+        card_UI.Setup(DataManager.instance.CardData("base-002"));
         top_Arrow.gameObject.SetActive(true);
         FadeoutEffect(top_Arrow);
         //card_text.text = "파란색으로 색칠된 방향\n대각선으로 이동합니다.";
         MainText_Next(true);
         yield return new WaitWhile(() => textStep < 3);
 
-        card_UI.Setup(DataManager.instance.CardData("base-020"));
+        card_UI.Setup(DataManager.instance.CardData("base-055"));
         middle_Arrow.gameObject.SetActive(true);
         FadeoutEffect(top_Arrow, true);
         FadeoutEffect(top_Arrow);
@@ -427,7 +430,7 @@ public class TutorialManager : MonoBehaviour
         step4_Panel.SetActive(true);
         FadeoutEffect(step4_arrow);
 
-        yield return new WaitWhile(() => EntityManager.instance.canMoveCount > 1);
+        yield return new WaitWhile(() => EntityManager.instance.canMoveCount > EntityManager.instance.MaxMoveCount - 1);
 
         Base_Panel_SetActive(true);
         step4_Panel.SetActive(false);
@@ -500,7 +503,7 @@ public class TutorialManager : MonoBehaviour
         step5_arrow.gameObject.SetActive(true);
         FadeoutEffect(step5_arrow);
 
-        yield return new WaitWhile(() => EntityManager.instance.summonCount > 1);
+        yield return new WaitWhile(() => EntityManager.instance.summonCount > EntityManager.instance.MaxSummonCount - 1);
 
         MapManager.instance.Tile_Color_Reset();
 
@@ -546,7 +549,7 @@ public class TutorialManager : MonoBehaviour
         step2_arrow3.gameObject.SetActive(true);
 
         step5_text.SetActive(true);
-        yield return new WaitWhile(() => EntityManager.instance.summonCount > 0);
+        yield return new WaitWhile(() => EntityManager.instance.summonCount > EntityManager.instance.MaxSummonCount - 2);
         step5_text.SetActive(false);
         step2_arrow3.gameObject.SetActive(false);
         Base_Panel_SetActive(true);
@@ -562,7 +565,7 @@ public class TutorialManager : MonoBehaviour
         MainText_Next();
 
         yield return new WaitWhile(() => textStep < 6);
-
+        endTurnBtn.Setup(true);
         //mainText.text = "턴 종료를 눌러주세요.";
         MainText_Next();
 
@@ -582,13 +585,20 @@ public class TutorialManager : MonoBehaviour
         yield return new WaitWhile(() => TurnManager.instance.myTurn);
         endTurnBtn.Setup(false);
         step3_arrow.gameObject.SetActive(false);
+
         TurnManager.instance.TurnEnd();
-        foreach (var hand in CardManager.instance.playerCards)
+        endTurnBtn.Setup(false);
+
+        foreach (Hand hand in CardManager.instance.playerCards)
         {
             if (hand.card.cardType.card_category != CardCategory.Magic)
+            {
                 hand.clickBlock = true;
+            }
             else
+            {
                 hand.clickBlock = false;
+            }
         }
         Base_Panel_SetActive(true);
 
@@ -604,6 +614,7 @@ public class TutorialManager : MonoBehaviour
 
     IEnumerator Step5()
     {
+        endTurnBtn.Setup(false);
         canNextText = true;
         //mainText.text = "돌진 명령은 1턴간 전투력을 올려주는 카드입니다.";
         MainText_Next();
@@ -616,7 +627,7 @@ public class TutorialManager : MonoBehaviour
         canNextText = false;
 
         rightCard_arrow.gameObject.SetActive(true);
-        foreach (var tile in MapManager.instance.mapData)
+        foreach (Tile tile in MapManager.instance.mapData)
         {
             tile.clickBlock = false;
         }
@@ -624,7 +635,9 @@ public class TutorialManager : MonoBehaviour
 
         Base_Panel_SetActive(false);
 
-        yield return new WaitWhile(() => CardManager.instance.playerUsedCardCount < 1);
+        print("여기가 문제일수 있음");
+//        yield return new WaitWhile(() => CardManager.instance.playerUsedCardCount < 1);
+        yield return new WaitWhile(() => CardManager.instance.playerCards.Count >= CardManager.instance.maxHandCard);
         rightCard_arrow.gameObject.SetActive(false);
 
         Base_Panel_SetActive(true);
@@ -699,7 +712,7 @@ public class TutorialManager : MonoBehaviour
                 tile.clickBlock = false;
         }
 
-        yield return new WaitWhile(() => EntityManager.instance.canMoveCount > 1);
+        yield return new WaitWhile(() => EntityManager.instance.canMoveCount > EntityManager.instance.MaxMoveCount - 1);
         step6_arrow.gameObject.SetActive(false);
         Base_Panel_SetActive(true);
         //mainText.text = "공격을 하게되면 서로의 전투력을 차감해서 0 이된쪽은 파괴가 됩니다.";
@@ -709,12 +722,13 @@ public class TutorialManager : MonoBehaviour
         //mainText.text = "카드 효과로 전투력이 상승한 상태라면\n효과가 끝나 전투력이 0 이 된다면 파괴 됩니다.";
         MainText_Next();
         yield return new WaitWhile(() => textStep < 4);
-
+        endTurnBtn.Setup(true);
         //mainText.text = "턴 종료를 눌러주세요.";
         MainText_Next();
         yield return new WaitWhile(() => textStep < 5);
         endTurnBtn.Setup(true);
         Base_Panel_SetActive(false);
+        canNextText = false;
 
         yield return new WaitWhile(() => TurnManager.instance.myTurn);
 
@@ -727,11 +741,37 @@ public class TutorialManager : MonoBehaviour
         EntityManager.instance.Summon(false, "base-005", summonPos);
 
         TurnManager.instance.TurnEnd();
-
+        endTurnBtn.Setup(false);
+        canNextText = true;
         Base_Panel_SetActive(true);
         //mainText.text = "카드 타입에 대해 알아보겠습니다.";
         MainText_Next();
-        
+        yield return new WaitWhile(() => textStep < 6);
+        canNextText = false;
+        endTurnBtn.Setup(true);
+        Base_Panel_SetActive(false);
+        foreach (Hand hand in CardManager.instance.playerCards)
+        {
+            hand.clickBlock = false;
+        }
+
+        foreach (Entity entity in EntityManager.instance.playerEntities)
+        {
+            if (entity.card.cardType.attack_type != AttackType.shooter)
+                entity.clickBlock = false;
+        }
+
+        foreach (Tile tile in MapManager.instance.mapData)
+        {
+            tile.clickBlock = false;
+        }
+
+        canNext = true;
+        canNextText = false;
+        textStep = 0;
+
+        endTurnBtn.GetComponent<Button>().onClick.AddListener(() => TurnEnd());
+
         canNext = true;
         canNextText = false;
         textStep = 0;
@@ -776,7 +816,7 @@ public class TutorialManager : MonoBehaviour
         MapManager.instance.mapData[4, 3].clickBlock = false;
         MapManager.instance.mapData[4, 3].ColorChange_Rock(true, Color.blue);
 
-        yield return new WaitWhile(() => EntityManager.instance.summonCount > 1);
+        yield return new WaitWhile(() => EntityManager.instance.summonCount > EntityManager.instance.MaxSummonCount - 1);
         rightCard_arrow.gameObject.SetActive(false);
         step5_arrow.gameObject.SetActive(false);
         Base_Panel_SetActive(true);
@@ -808,12 +848,12 @@ public class TutorialManager : MonoBehaviour
         canNextText = false;
 
         Base_Panel_SetActive(false);
-        foreach (var hand in CardManager.instance.playerCards)
+        foreach (Hand hand in CardManager.instance.playerCards)
         {
             hand.clickBlock = true;
         }
 
-        foreach (var entity in EntityManager.instance.playerEntities)
+        foreach (Entity entity in EntityManager.instance.playerEntities)
         {
             if (entity.card.cardType.attack_type != AttackType.shooter)
             {
@@ -821,7 +861,7 @@ public class TutorialManager : MonoBehaviour
             }
         }
 
-        foreach (var tile in MapManager.instance.mapData)
+        foreach (Tile tile in MapManager.instance.mapData)
         {
             if (tile != MapManager.instance.mapData[4, 4])
                 tile.clickBlock = true;
@@ -829,7 +869,7 @@ public class TutorialManager : MonoBehaviour
                 tile.clickBlock = false;
         }
 
-        yield return new WaitWhile(() => EntityManager.instance.canMoveCount > 1);
+        yield return new WaitWhile(() => EntityManager.instance.canMoveCount > EntityManager.instance.MaxMoveCount -1);
 
         Base_Panel_SetActive(true);
         canNextText = true;
@@ -873,7 +913,6 @@ public class TutorialManager : MonoBehaviour
         TurnManager.instance.TurnEnd();
 
         endTurnBtn.Setup(true);
-        endTurnBtn.AddTrunAction();
         Base_Panel_SetActive(false);
 
         foreach (var hand in CardManager.instance.playerCards)
@@ -909,8 +948,9 @@ public class TutorialManager : MonoBehaviour
             fadeImg.color = new Color(255, 255, 255, 1);
         }
         else
+        {
             fadeImg.DOFade(0, 1).SetEase(Ease.InSine).SetLoops(-1, LoopType.Restart);
-
+        }
     }
 
     void NextStep()

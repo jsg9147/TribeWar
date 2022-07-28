@@ -10,11 +10,11 @@ public class Entity : MonoBehaviour
 {
     private const int PERMANENT = 0;
 
-    [SerializeField] SpriteRenderer feildCardFrame;
-    [SerializeField] SpriteRenderer cardSprite;
-    [SerializeField] TMP_Text BattlePower_TMP;
-    [SerializeField] SpriteRenderer arrow;
-    [SerializeField] SpriteRenderer checkMark;
+    public SpriteRenderer feildCardFrame;
+    public SpriteRenderer cardSprite;
+    public TMP_Text BattlePower_TMP;
+    public SpriteRenderer arrow;
+    public SpriteRenderer checkMark;
 
     public Sprite bishopFrame;
     public Sprite rookFrame;
@@ -105,6 +105,8 @@ public class Entity : MonoBehaviour
         clickBlock = false;
     }
 
+    public void OriginColorChange() => feildCardFrame.color = originColor;
+
     #region Mouse activate
 
     private void OnMouseOver()
@@ -116,6 +118,11 @@ public class Entity : MonoBehaviour
 
         feildCardFrame.color = isMine ? new Color(0.5f, 0.5f, 1f) : Color.yellow;
 
+        if (belong == EntityBelong.AI)
+        {
+            feildCardFrame.color = Color.black;
+        }
+        
         EntityManager.instance.EntityMouseOver(this);
 
         if (Input.GetKeyDown(KeyCode.Mouse1))
@@ -127,6 +134,11 @@ public class Entity : MonoBehaviour
             return;
 
         feildCardFrame.color = originColor;
+        if (belong == EntityBelong.AI)
+        {
+            feildCardFrame.color = Color.yellow;
+        }
+        EntityManager.instance.EntityMouseExit(this);
     }
 
     private void OnMouseDown()
@@ -244,11 +256,17 @@ public class Entity : MonoBehaviour
     {
         arrow.gameObject.SetActive(isActive);
         arrow.transform.DOKill();
-        arrow.DOFade(0, 1).SetEase(Ease.InSine).SetLoops(-1, LoopType.Restart);
+        if (isActive)
+        {
+            arrow.DOFade(0, 1).SetEase(Ease.InSine).SetLoops(-1, LoopType.Restart);
+        }
     }
 
     public void CheckMark(bool isActive)
     {
+        if (checkMark == null)
+            return;
+
         checkMark.gameObject.SetActive(isActive);
     }
 }

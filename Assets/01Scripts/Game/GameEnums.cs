@@ -123,3 +123,10 @@ public enum EffectClass
     control,
     tributeMagic
 }
+
+
+public enum Language
+{
+    KOREA,
+    ENGLISH
+}

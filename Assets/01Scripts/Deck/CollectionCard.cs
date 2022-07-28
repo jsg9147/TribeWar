@@ -16,7 +16,7 @@ public class CollectionCard : MonoBehaviour
 
     public void CardSetup(Card _card, int count)
     {
-        this.card = _card;
+        card = _card;
         cardCount = count;
         card_Count_text.text = "×" + count.ToString();
         cardUI.Setup(card);
@@ -26,12 +26,17 @@ public class CollectionCard : MonoBehaviour
     public void CardCountPlus()
     {
         cardCount++;
-        card_Count_text.text = "×" + cardCount.ToString();
+        CountUpdate();
     }
 
     public void CardCountMinus()
     {
         cardCount--;
+        CountUpdate();
+    }
+
+    public void CountUpdate()
+    {
         card_Count_text.text = "×" + cardCount.ToString();
     }
 

@@ -4,25 +4,23 @@ using UnityEngine;
 using DG.Tweening;
 
 //텔레포트
-public class MonsterMoveEffect : MoveEffect
+public class MoveEffect : CardMoveEffect
 {
     public override void Resolve(EntityManager entityManager, Entity entity, Tile targetTile)
     {
-        if (entity == null)
-            return;
-        if (targetTile.isEmpty)
-            return;
+        if (entity == null) { return; }
+        if (targetTile.onEntity) { return; }
 
         targetTile.onEntity = entity;
 
-        //if (entity.isMine)
-        //{
-        //    targetTile.tileState = TileState.onPlayerMonster;
-        //}
-        //else
-        //{
-        //    targetTile.tileState = TileState.onEnermyEntity;
-        //}
+        if (entity.isMine)
+        {
+            targetTile.tileState = TileState.onPlayerMonster;
+        }
+        else
+        {
+            targetTile.tileState = TileState.onEnermyMonster;
+        }
 
         MapManager.instance.mapData[entity.coordinate.x, entity.coordinate.y].tileState = TileState.empty;
 

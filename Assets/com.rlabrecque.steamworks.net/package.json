@@ -1,21 +1,3 @@
-{
-  "name": "com.rlabrecque.steamworks.net",
-  "displayName": "Steamworks.NET",
-  "version": "20.1.0",
-  "unity": "2019.4",
-  "author": {
-    "name": "Riley Labrecque",
-    "email": "support@rileylabrecque.com",
-    "url": "https://steamworks.github.io"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net"
-  },
-  "keywords": [
-    "steam",
-    "steamworks"
-  ],
-  "description": "Steamworks.NET is a C# Wrapper for Valve's Steamworks API."
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:949ca2d5e78a32f37fd7a0a0cdb8b3ecf8af950044085b08d6a1f0423b7797fd
+size 554

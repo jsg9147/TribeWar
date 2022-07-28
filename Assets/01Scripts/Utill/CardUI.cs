@@ -42,7 +42,7 @@ public class CardUI : MonoBehaviour
             nameTMP.text = this.card.name;
             if (this.card.cardType.card_category == CardCategory.Monster)
             {
-                battlePower_TMP.text = "전투력 : " + this.card.GetBaseStat("bp").ToString();
+                battlePower_TMP.text = "BP : " + this.card.GetBaseStat("bp").ToString();
 
                 if (this.card.cardType.moveType == MoveType.Rook)
                     cardFrame_Image.sprite = RookFrame;
@@ -59,8 +59,8 @@ public class CardUI : MonoBehaviour
 
             try
             {
-                cardTextTmp.text = this.card.card_text;
-                tribeTextTmp.text = tribeStr(card.cardType.tribe);
+                cardTextTmp.text = this.card.text;
+                tribeTextTmp.text = "[" + DataManager.instance.tribeStr[card.cardType.tribe] + "]";
                 classIcon_Image.sprite = this.card.cardType.typeIcon;
                 level_Icon.sprite = Level_Sprite_List[card.cost];
             }
@@ -81,22 +81,6 @@ public class CardUI : MonoBehaviour
             cardImage.gameObject.SetActive(false);
             cardTextTmp.gameObject.SetActive(false);
             battlePower_TMP.gameObject.SetActive(false);
-        }
-    }
-
-    // 텍스트 파일로 받아오게 해야함
-    string tribeStr(Tribe tribe)
-    {
-        switch (tribe)
-        {
-            case Tribe.Dragon:
-                return "[드래곤]";
-            case Tribe.Warrior:
-                return "[전사]";
-            case Tribe.Magician:
-                return "[마법사]";
-            default:
-                return "[공통]";
         }
     }
 }

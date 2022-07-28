@@ -26,7 +26,8 @@ public class LocalizationManager : MonoBehaviour
     const string KOREA = "Korea";
 
     public string language;
-    LocalizationData localizationData;
+    public LocalizationData UIText;
+    public LocalizationData IngameText;
 
     private void Awake()
     {
@@ -44,8 +45,15 @@ public class LocalizationManager : MonoBehaviour
     }
     void Init()
     {
-        localizationData = new LocalizationData();
+        UIText = Read("LocalizationData/UIText");
+        IngameText = Read("LocalizationData/InGameText");
         //그 옵션 저장하기 좋았던 그거 쓰면 될듯
+    }
+
+    public void ChangeTextLanguage()
+    {
+        UIText = Read("LocalizationData/UIText");
+        IngameText = Read("LocalizationData/InGameText");
     }
 
     public void SetLanguage(string _language) => this.language = _language;
@@ -94,5 +102,19 @@ public class LocalizationManager : MonoBehaviour
                 language = ENGLISH;
                 break;
         }
+        
+    }
+
+    public string GetIngameText(string tag)
+    {
+        string text = "";
+        for (int i = 0; i < IngameText.items.Count; i++)
+        {
+            if (IngameText.items[i].tag == tag)
+            {
+                text = IngameText.items[i].value;
+            }
+        }
+        return text;
     }
 }

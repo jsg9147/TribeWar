@@ -118,20 +118,11 @@ public class Stat
     public void AllRemoveModifier()
     {
         int oldValue = effectiveValue;
-        List<Modifier> modifiersToRemove = new List<Modifier>(modifiers.Count);
+        modifiers.Clear();
 
-        var temporaryModifiers = modifiers.FindAll(x => !x.IsPermanent());
-        foreach (var modifier in temporaryModifiers)
+        if (onValueChanged != null)
         {
-            modifiersToRemove.Add(modifier);
-        }
-        foreach (var modifier in modifiersToRemove)
-        {
-            modifiers.Remove(modifier);
-        }
-        if (modifiersToRemove.Count > 0 && onValueChanged != null)
-        {
-            onValueChanged(oldValue, effectiveValue);
+            onValueChanged(oldValue, originalValue);
         }
     }
 

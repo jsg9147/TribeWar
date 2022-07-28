@@ -22,6 +22,7 @@ public class RoomScreen : MonoBehaviour
     {
         MyDeckListUpdate();
         MessageReset();
+        ChangeButtonLanguage();
     }
 
     void MessageReset()
@@ -46,19 +47,9 @@ public class RoomScreen : MonoBehaviour
         }
         deckManager.MyDeckListUpdate(deckListContent, false);
     }
-
-    public void Ready_Button_Text_Change()
-    {
-        if (readyButtonText.text == "준 비")
-            readyButtonText.text = "준비 해제";
-        else
-            readyButtonText.text = "준 비";
-    }
-
     public void ChangeButtonLanguage()
     {
-        LocalizationData localizationData = LocalizationManager.instance.Read("LocalizationData/UIText");
-
+        LocalizationData localizationData = LocalizationManager.instance.UIText;
         for (int i = 0; i < localizationData.items.Count; i++)
         {
             if (localizationData.items[i].tag == "Player")

@@ -41,10 +41,10 @@ public class EnlargeCardUI : MonoBehaviour
         this.card = card;
         cardName.text = card.name;
         cardImage.sprite = card.sprite;
-        explanationText.text = card.card_text;
+        explanationText.text = card.text;
         cardClassIcon.sprite = card.cardType.typeIcon;
         costText.text = card.cost.ToString();
-        tribeText.text = card.TribeStr();
+        tribeText.text = DataManager.instance.tribeStr[card.cardType.tribe];
 
         if (card.cardType.card_category == CardCategory.Monster)
         {

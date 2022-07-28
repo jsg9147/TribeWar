@@ -5,9 +5,7 @@ using UnityEngine.EventSystems;
 
 public class EditCardEvent : MonoBehaviour, IPointerClickHandler
 {
-    public 
-    CardUI cardUI;
-    CollectionManager collectionManager;
+    public CardUI cardUI;
     CollectionCard collectionCard;
 
     public bool inCollector;
@@ -39,19 +37,19 @@ public class EditCardEvent : MonoBehaviour, IPointerClickHandler
         {
             if (inCollector)
             {
-                DeckEditor.instance.Card_Add_In_My_EditDeck(collectionCard);
+                DeckManager.instance.Add_Card_In_Deck(collectionCard, Input.GetKey(KeyCode.LeftShift));
                 DarkTonic.MasterAudio.MasterAudio.PlaySound("AddCard");
             }
             else
             {
+                DeckManager.instance.Remove_Card_Of_Deck(cardUI);
                 DarkTonic.MasterAudio.MasterAudio.PlaySound("RemoveCard");
-                DeckEditor.instance.Remove_Card_Of_Deck(cardUI);
             }
         }
 
         if (eventData.button == PointerEventData.InputButton.Left)
         {
-            DeckEditor.instance.EnlargeCard_Setup(cardUI.card);
+            DeckManager.instance.EnlargeCard_Setup(cardUI.card);
         }
     }
 }

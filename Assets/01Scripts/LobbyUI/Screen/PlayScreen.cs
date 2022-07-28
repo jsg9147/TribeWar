@@ -7,15 +7,14 @@ using Steamworks;
 
 public class PlayScreen : MonoBehaviour
 {
-
-    //public Web web;
-
     public Image userIcon;
     public TMP_Text username_Text;
     public TMP_Text playerRecord_Text;
     public GameObject deckListContent;
 
     public DeckManager deckManager;
+
+    public TMP_Text playerText;
 
     [Header("버튼 텍스트 모음")]
     public TMP_Text createRoom_Text;
@@ -136,7 +135,12 @@ public class PlayScreen : MonoBehaviour
 
             if (localizationData.items[i].tag == "SinglePlay")
             {
-                joinCodeInput_Text.text = localizationData.items[i].value;
+                singlePlay_Text.text = localizationData.items[i].value;
+            }
+
+            if (localizationData.items[i].tag == "Player")
+            {
+                playerText.text = localizationData.items[i].value;
             }
         }
     }

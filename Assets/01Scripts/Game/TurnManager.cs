@@ -14,6 +14,7 @@ public class TurnManager : MonoBehaviour
     public static Action<bool> OnAddCard;
     public static event Action<bool> OnTurnStarted;
 
+    public bool Tutorial;
     public float turnTime;
     public TMP_Text timeTMP;
 
@@ -136,6 +137,8 @@ public class TurnManager : MonoBehaviour
 
     void TurnTimer()
     {
+        if (Tutorial)
+            return;
         if (currentValue > 0)
         {
             currentValue -= Time.deltaTime;
@@ -143,7 +146,7 @@ public class TurnManager : MonoBehaviour
             if ((int)currentValue == 10 && timeWarning)
             {
                 timeWarning = false;
-                GameManager.instance.Notification("10초\n남았습니다"); // 영어버전 필요
+                GameManager.instance.Notification(LocalizationManager.instance.GetIngameText("10s"));
             } 
         }
         else

@@ -20,6 +20,7 @@ public class CardManager : MonoBehaviour
     
     public Canvas canvas;
     public EffectManager effectManager;
+    public GraveManager graveManager;
 
     [Header("Deck remain card List")]
     public CardPreview deckCard;
@@ -52,6 +53,9 @@ public class CardManager : MonoBehaviour
 
     public int maxHandCard;
     public bool reloading;
+    public bool selectState => selectCard != null;
+
+    public TMPro.TMP_Text deckCount_text;
 
     List<Card> itemBuffer;
     List<Card> aI_ItemBuffer;
@@ -60,12 +64,8 @@ public class CardManager : MonoBehaviour
     Dictionary<string, int> cardCounting;
 
     Hand selectCard = null;
-    public bool selectState => selectCard != null;
 
     bool isMyCardDrag;
-
-    //UserdCardCount 는 그냥 hand 카운트가 5면 되지 않나 싶은데 머리 아파서 나중에 고치자
-    public int playerSummonCount, playerUsedCardCount = -1;
 
     int useCardIndex;
 
@@ -152,6 +152,7 @@ public class CardManager : MonoBehaviour
             }
         }
         viewList.OrderBy(x => x.card.id).ThenBy(x => x.card.name);
+        deckCount_text.text = itemBuffer.Count.ToString();
     }
 
     public Card PopItem(bool isMine)
@@ -208,7 +209,7 @@ public class CardManager : MonoBehaviour
 
     public void MouseEventInit()
     {
-        isMyCardDrag = false;
+        //isMyCardDrag = false;
         selectCard?.MoveTransform(selectCard.originPRS, false);
     }
 
@@ -245,7 +246,7 @@ public class CardManager : MonoBehaviour
 
     void AI_SetupItemBuffer()
     {   
-        aI_ItemBuffer = DataManager.instance.Load_AI_Deck();
+        aI_ItemBuffer = DataManager.instance.AI_CardList();
         
         for (int i = 0; i < aI_ItemBuffer.Count; i++)
         {
@@ -257,6 +258,9 @@ public class CardManager : MonoBehaviour
     }
     public void Can_Use_Effect(bool isActive = true)
     {
+        if (reloading)
+            return;
+
         if (isActive)
         {
             foreach (Hand hand in playerCards)
@@ -288,7 +292,7 @@ public class CardManager : MonoBehaviour
             }
         }
 
-        if (targetHand.Count == maxHandCard && TurnManager.instance.turnCount > 1)
+        if (targetHand.Count == maxHandCard && TurnManager.instance.turnCount > 0)
         {
             if (GameManager.instance.MultiMode)
             {
@@ -315,7 +319,7 @@ public class CardManager : MonoBehaviour
                     {
                         if (TutorialGame == false)
                         {
-                            GameManager.instance.GameResult(false);
+                            GameManager.instance.GameResult(false, NetworkRpcFunc.instance.isServer);
                             break;
                         }
                     }
@@ -332,15 +336,25 @@ public class CardManager : MonoBehaviour
                     DarkTonic.MasterAudio.MasterAudio.PlaySound("Deal_Single_Whoosh_01");
                 }
             }
+            else
+            {
+                for (int i = targetHand.Count; i < maxHandCard; i++)
+                {
+                    GameObject cardObject = Instantiate(handPrefab, cardSpawnPoint.position, Utils.QI);
+                    cardObject.SetActive(true);
+                    cardObject.transform.SetParent(parent.transform);
+                    cardObject.transform.localScale = Vector3.one;
+
+                    Hand card = cardObject.GetComponent<Hand>();
+                    card.Setup(null, isMine);
+                    targetHand.Add(card);
+
+                    DarkTonic.MasterAudio.MasterAudio.PlaySound("Deal_Single_Whoosh_01");
+                }
+            }
         }
 
         CardAlignment(isMine, 0.8f);
-
-        if (TurnManager.instance.myTurn)
-        {
-            playerUsedCardCount = 0;
-        }
-
     }
 
     public void StartCardDealing()
@@ -535,7 +549,6 @@ public class CardManager : MonoBehaviour
                     handCard.transform.DOKill();
                     Destroy(handCard.gameObject);
                     selectCard = null;
-                    playerUsedCardCount++;
                 }
                 else
                 {
@@ -544,7 +557,7 @@ public class CardManager : MonoBehaviour
 
                 if (tryCard.cardType.card_category != CardCategory.Monster)
                 {
-                    EffectCard_Animation(tryCard);
+                    EffectCard_Animation(tryCard, isMine);
                     DarkTonic.MasterAudio.MasterAudio.PlaySound("Magic01");
                 }
 
@@ -563,7 +576,7 @@ public class CardManager : MonoBehaviour
         }
     }
 
-    void EffectCard_Animation(Card triggerCard)
+    void EffectCard_Animation(Card triggerCard, bool isMine)
     {
         CardUI triggerCardUI = Instantiate(EnlargeEffectCard, canvas.transform);
         triggerCardUI.Setup(triggerCard);
@@ -572,7 +585,7 @@ public class CardManager : MonoBehaviour
         .Append(triggerCardUI.transform.DOMoveX(-120f, 0.8f))
         .AppendCallback(() =>
         {
-
+            graveManager.AddGraveCard(triggerCard, isMine);
         }).OnComplete(() => Destroy(triggerCardUI));
         triggerCardUI.transform.DOScale(Vector3.zero, 0.8f);
     }
@@ -589,8 +602,6 @@ public class CardManager : MonoBehaviour
         {
             tempTributeCard = null;
         }
-
-        playerUsedCardCount++;
     }
 
     void TurnEndSetup(bool myTurn)
@@ -627,6 +638,7 @@ public class CardManager : MonoBehaviour
         if (reloading)
             return;
 
+        
         if (GameManager.instance.MultiMode && isMine == false)
         {
             card = targetHands[Random.Range(0, targetHands.Count)];
@@ -641,16 +653,10 @@ public class CardManager : MonoBehaviour
         if (isMine)
         {
             selectCard = null;
-            playerSummonCount++;
-            playerUsedCardCount++;
         }
         CardAlignment(isMine);
 
         useCardIndex = 0;
-        //else
-        //{
-        //    Remove_OhterPlayer_HandCard();
-        //}
     }
 
     #region MyCard

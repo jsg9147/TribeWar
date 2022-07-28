@@ -21,6 +21,9 @@ public class EffectManager : MonoBehaviour
     public List<Ability> enermy_Activated_Abilities;
     public List<Ability> ai_Abilities;
     //
+    [SerializeField] GameObject damage_VFX;
+    [SerializeField] GameObject buff_VFX;
+    [SerializeField] GameObject curse_VFX;
 
     void Start()
     {
@@ -55,7 +58,7 @@ public class EffectManager : MonoBehaviour
 
     public void Select_Target(int entityID, bool server)
     {
-        bool isMine = server == NetworkRpcFunc.instance.isServer;
+        bool isMine = GameManager.instance.IsMine(server);
 
         Entity targetEntity = entityManager.All_Entities.Find(x => x.id == entityID);
 
@@ -63,7 +66,6 @@ public class EffectManager : MonoBehaviour
             return;
 
         EffectTarget effectTarget = triggered_EffectCard.ability.target.GetTarget();
-
         switch (effectTarget)
         {
             case EffectTarget.PlayerCard:
@@ -88,9 +90,13 @@ public class EffectManager : MonoBehaviour
 
             case EffectTarget.TribeTarget:
                 if (targetEntity.card.cardType.tribe == triggered_EffectCard.cardType.tribe)
+                {
                     effect_Activated = false;
+                }
                 else
-                    GameManager.instance.Notification(triggered_EffectCard.TribeStr() + " 타겟을\n추가 선택 해주세요");
+                {
+                    GameManager.instance.Notification( DataManager.instance.tribeStr[triggered_EffectCard.cardType.tribe] + LocalizationManager.instance.GetIngameText("PickTarget"));
+                }
                 break;
 
             case EffectTarget.Tile:
@@ -100,31 +106,63 @@ public class EffectManager : MonoBehaviour
                 break;
         }
 
-        if (moveEffect)
+        if (effect_Activated == false)
         {
-            entityManager.clickBlock = true;
-            MapManager.instance.SelectMode(targetEntity, triggered_EffectCard.ability);
-        }
-        else
-        {
-            if (effect_Activated == false)
-            {
-                // gameLog.Log_Sorter(LogCategory.Effected, targetEntity);
 
-                foreach (var effect in triggered_EffectCard.ability.effects)
+#if UNITY_EDITOR
+            Debug.Log(triggered_EffectCard.name + " : " + triggered_EffectCard.ability.effects.Count);
+#endif
+            if (moveEffect && isMine)
+            {
+                entityManager.clickBlock = true;
+                MapManager.instance.SelectMode(targetEntity, triggered_EffectCard.ability);
+            }
+            else
+            {
+                foreach (Effect effect in triggered_EffectCard.ability.effects)
                 {
                     effect.Resolve(targetEntity);
+
+                    EffectVFX_Instantiate(targetEntity, effect);
                 }
-                entityManager.effect_Count++;
             }
+            entityManager.effect_Count++;
         }
         entityManager.UpdateEntityState();
     }
 
+    void EffectVFX_Instantiate(Entity entity, Effect effect)
+    {
+        GameObject effectVFX;
+        switch (effect.effectClass)
+        {
+            case EffectClass.increase:
+                effectVFX = Instantiate(buff_VFX, entity.transformPos, transform.rotation) as GameObject;
+                Destroy(effectVFX, 3f);
+                break;
+
+            case EffectClass.decrease:
+                if (effect.duration == 0)
+                {
+                    effectVFX = Instantiate(damage_VFX, entity.transformPos, transform.rotation) as GameObject;
+                    Destroy(effectVFX, 3f);
+                }
+                else
+                {
+                    effectVFX = Instantiate(curse_VFX, entity.transformPos, transform.rotation) as GameObject;
+                    Destroy(effectVFX, 3f);
+                }
+                break;
+            default:
+                print(11);
+                break;
+        }
+    }
+
+
     public bool EffectTrigger(bool isMine, string card_id)
     {
         triggered_EffectCard = DataManager.instance.CardData(card_id);
-
         if (EffectRequireExist(isMine, entityManager.All_Entities, triggered_EffectCard) == false)
         {
             return false;
@@ -190,25 +228,16 @@ public class EffectManager : MonoBehaviour
 
     public void EffectSolve(string card_id, bool server)
     {
-        bool isMine;
-        if (GameManager.instance.MultiMode)
-        {
-            isMine = NetworkRpcFunc.instance.isServer == server;
-        }
-        else
-        {
-            isMine = server;
-        }
-
+        bool isMine = GameManager.instance.IsMine(server);
         Card effectCard = DataManager.instance.CardData(card_id);
         List<Entity> all_Entities = entityManager.All_Entities;
 
-        if (effectCard.ability == null)
-            return;
+        if (effectCard.ability == null) { return; }
 
         switch (effectCard.ability.target.GetTarget())
         {
             case EffectTarget.TargetCard:
+            case EffectTarget.PlayerCard:
                 if (isMine)
                 {
                     if (effectCard.cardType.card_category == CardCategory.Monster)
@@ -217,18 +246,26 @@ public class EffectManager : MonoBehaviour
                     }
                     else
                     {
-
                         if (effectCard.ability.Tag.Contains("move"))
                         {
+                            entityManager.effectCard = effectCard;
                             moveEffect = true;
                         }
-                        
-                        GameManager.instance.Notification("타겟을 \n선택해주세요");
+
+                        GameManager.instance.Notification(LocalizationManager.instance.GetIngameText("PickTarget"));
                         effect_Activated = true;
                     }
                 }
+                else
+                {
+                    if (effectCard.ability.Tag.Contains("move"))
+                    {
+                        entityManager.effectCard = effectCard;
+                        moveEffect = true;
+                    }
+                    effect_Activated = true;
+                }
                 break;
-
             case EffectTarget.RandomCard:
                 if (all_Entities.Count != 0)
                 {
@@ -258,7 +295,7 @@ public class EffectManager : MonoBehaviour
                             moveEffect = true;
                         }
 
-                        GameManager.instance.Notification("타겟을 \n선택해주세요");
+                        GameManager.instance.Notification(LocalizationManager.instance.GetIngameText("PickTarget"));
                         effect_Activated = true;
                     }
                 }
@@ -387,6 +424,7 @@ public class EffectManager : MonoBehaviour
         foreach (Effect effect in effectCard.ability.effects)
         {
             effect.Resolve(entity);
+            EffectVFX_Instantiate(entity, effect);
         }
     }
 
@@ -401,7 +439,7 @@ public class EffectManager : MonoBehaviour
         if (triggerCard.ability.target.GetTarget() == EffectTarget.Player)
             return true;
 
-        foreach (var entity in target_Entities)
+        foreach (Entity entity in target_Entities)
         {
             if (entity.card.cardType.tribe == triggerCard.cardType.tribe)
             {

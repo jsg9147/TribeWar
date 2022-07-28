@@ -227,10 +227,10 @@ public class MapManager : MonoBehaviour
     public void SelectMode(Entity entity, Ability ability)
     {
         select_tile_mode = true;
-        GameManager.instance.Notification("이동할 장소를 선택 하세요");
+        GameManager.instance.Notification(LocalizationManager.instance.GetIngameText("Move"));
         int value = 0;
 
-        foreach (var effect in ability.effects)
+        foreach (Effect effect in ability.effects)
         {
             if (effect.effectClass == EffectClass.move)
             {
@@ -238,7 +238,7 @@ public class MapManager : MonoBehaviour
             }
         }
 
-        foreach (var tile in mapData)
+        foreach (Tile tile in mapData)
         {
             if (tile.tileState == TileState.empty)
             {
@@ -262,11 +262,11 @@ public class MapManager : MonoBehaviour
             {
                 if (GameManager.instance.MultiMode)
                 {
-                    GameManager.instance.localGamePlayerScript.CmdMoveEffect(temp_entity.id, targetTile.coordinate.vector3Pos);
+                    GameManager.instance.localGamePlayerScript.CmdMoveEffect(temp_entity.id, targetTile.coordinate.vector3Pos, NetworkRpcFunc.instance.isServer);
                 }
                 else
                 {
-                    EntityManager.instance.Target_Effect_Solver(temp_entity.id, targetTile.coordinate.vector3Pos);
+                    EntityManager.instance.Target_Effect_Solver(temp_entity.id, targetTile.coordinate.vector3Pos, true); ;
                 }
                 select_tile_mode = false;
             }
@@ -275,16 +275,7 @@ public class MapManager : MonoBehaviour
 
     public void SetOutpost(Coordinate coordinate, bool server)
     {
-        bool isMine, multimode;
-        multimode = GameManager.instance.MultiMode;
-        if (multimode)
-        {
-            isMine = server == NetworkRpcFunc.instance.isServer;
-        }
-        else
-        {
-            isMine = server;
-        }
+        bool isMine = GameManager.instance.IsMine(server);
 
         Outpost outpost;
 
@@ -313,7 +304,7 @@ public class MapManager : MonoBehaviour
             livePlayerOutpost = player_OutpostList.Count;
             liveOpponentOutpost = opponent_OutpostList.Count;
 
-            if (multimode)
+            if (GameManager.instance.MultiMode)
             {
                 if (NetworkRpcFunc.instance.isServer)
                     GameManager.instance.StartGame();

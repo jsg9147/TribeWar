@@ -19,20 +19,40 @@ public class ProfileController : MonoBehaviour
     public TMP_Text otherComment;
 
     public GameObject blackPanel;
+
+    float WinRate(int win, int lose)
+    {
+        float winRate;
+
+        int total = win + lose;
+
+        if (total == 0)
+        {
+            winRate = 0;
+        }
+        else
+        {
+            winRate = win / (lose + win) * 100f;
+        }
+
+        return winRate;
+    }
     public void SetMyProfile(GamePlayer gamePlayer)
     {
         int win = gamePlayer.playerWin;
         int lose = gamePlayer.playerLose;
 
-        float winRate = DataManager.instance.userInfo.WinRate();
-        myAvatar.sprite = SetProfileIcon(gamePlayer.iImage);
+        float winRate = WinRate(win, lose);
+
+        myAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(gamePlayer.SteamID));
+        //myAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.SteamID)));
 
         string winRateStr = (lose == 0) ? "100.0" : winRate.ToString("F1");
         if (win == 0)
             winRateStr = "0.00";
 
         myName.text = gamePlayer.playerName;
-        myRecord.text = (int)win + "W " + (int)lose + "L ( " + winRateStr + " % )";
+        myRecord.text = win + "W " + lose + "L ( " + winRateStr + " % )";
     }
 
     public void SetOtherProfile(GamePlayer gamePlayer)
@@ -40,15 +60,14 @@ public class ProfileController : MonoBehaviour
         int win = gamePlayer.playerWin;
         int lose = gamePlayer.playerLose;
 
-        float winRate = gamePlayer.playerWinRate;
-        otherAvatar.sprite = SetProfileIcon(gamePlayer.iImage);
+        float winRate = WinRate(win, lose);
+        otherAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(gamePlayer.SteamID));
+        //otherAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.SteamID)));
 
         string winRateStr = (lose == 0) ? "100.0" : winRate.ToString("F1");
-        if (win == 0)
-            winRateStr = "0.00";
 
         otherName.text = gamePlayer.playerName;
-        otherRecord.text = (int)win + "W " + (int)lose + "L ( " + winRateStr + " % )";
+        otherRecord.text = win + "W " + lose + "L ( " + winRateStr + " % )";
     }
 
     public void BlackPanelSetActive(bool isActive) => blackPanel.SetActive(isActive);

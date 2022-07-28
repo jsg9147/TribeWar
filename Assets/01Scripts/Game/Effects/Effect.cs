@@ -31,17 +31,6 @@ public abstract class Effect
     {
 
     }
-
-    public virtual void Resolve(SingleEntity entity)
-    {
-
-    }
-
-    public virtual void Reverse(SingleEntity entity)
-    {
-
-    }
-
     public virtual void Resolve(EntityManager entityManager, Card card, bool isMine)
     {
 
@@ -142,7 +131,7 @@ public abstract class SummonCountEffect : CardEffect
     public Tribe targetTribe;
 }
 
-public abstract class MoveEffect : CardEffect
+public abstract class CardMoveEffect : CardEffect
 {
     public Coordinate moveCoord;
 

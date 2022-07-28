@@ -13,7 +13,8 @@ public class ControlLossEffect : ControllEffect
         originBelong = entity.belong;
         entity.belong = EntityBelong.AI;
         entity.isMine = false;
-
+        entity.attackable = false;
+        entity.feildCardFrame.color = Color.yellow;
         base.Resolve(entity);
     }
 
@@ -22,9 +23,10 @@ public class ControlLossEffect : ControllEffect
         entity.belong = originBelong;
         if (originBelong == EntityBelong.Player)
         {
+            entity.attackable = false;
             entity.isMine = true;
         }
-
+        entity.OriginColorChange();
         base.Reverse(entity);
     }
 }

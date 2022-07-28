@@ -48,7 +48,7 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             nameTMP.text = card.name;
             if (card.cardType.card_category == CardCategory.Monster)
             {
-                BattlePointTMP.text = "전투력 : " + card.GetBaseStat("bp").ToString();
+                BattlePointTMP.text = "BP : " + card.GetBaseStat("bp").ToString();
 
                 if (card.cardType.moveType == MoveType.Rook)
                     cardFrame.sprite = RookFrame;
@@ -65,9 +65,9 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
             }
             try
             {
-                cardTextTmp.text = card.card_text.ToString();
+                cardTextTmp.text = card.text.ToString();
                 classIcon.sprite = card.cardType.typeIcon;
-                tribeTextTmp.text = tribeStr(card.cardType.tribe);
+                tribeTextTmp.text = "[" + DataManager.instance.tribeStr[card.cardType.tribe] + "]";
             }
             catch(System.NullReferenceException ex)
             {
@@ -98,13 +98,13 @@ public class Hand : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IP
         switch (tribe)
         {
             case Tribe.Dragon:
-                return "드래곤";
+                return "[Dragon]";
             case Tribe.Warrior:
-                return "전사";
+                return "[Warrior]";
             case Tribe.Magician:
-                return "마법사";
+                return "[Magician]";
             default:
-                return "공통";
+                return "[Common]";
         }
     }
 
