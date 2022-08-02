@@ -17,14 +17,16 @@ public class UserInfo
     {
         float winRate;
 
-        int total = Win + Lose;
+        float total = Win + Lose;
+
+        
         if (total == 0)
         {
             winRate = 0;
         }
         else
         {
-            winRate = Win / (Lose + Win) * 100f;
+            winRate = (Win / total) * 100f;
         }
 
         return winRate;

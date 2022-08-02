@@ -10,6 +10,8 @@ public class LobbyUI : MonoBehaviour
 {
     public static LobbyUI instance;
 
+    public TMPro.TMP_Text version;
+
     public DeckManager deckManager;
 
     public GameObject mainScreen;
@@ -44,6 +46,7 @@ public class LobbyUI : MonoBehaviour
 
     private void Start()
     {
+        version.text = Application.version;
         MakeInstance();
         MainScreenOn();
     }

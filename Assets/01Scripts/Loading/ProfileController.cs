@@ -24,7 +24,7 @@ public class ProfileController : MonoBehaviour
     {
         float winRate;
 
-        int total = win + lose;
+        float total = win + lose;
 
         if (total == 0)
         {
@@ -32,7 +32,7 @@ public class ProfileController : MonoBehaviour
         }
         else
         {
-            winRate = win / (lose + win) * 100f;
+            winRate = (win / total) * 100f;
         }
 
         return winRate;
@@ -44,8 +44,21 @@ public class ProfileController : MonoBehaviour
 
         float winRate = WinRate(win, lose);
 
-        myAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(gamePlayer.SteamID));
-        //myAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.SteamID)));
+        int imageIndex = SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.steamID_u));
+
+        for (int i = 0; i < 10; i++)
+        {
+            if (imageIndex != -1)
+            {
+                break;
+            }
+            else
+            {
+                imageIndex = SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.steamID_u));
+            }
+        }
+
+        myAvatar.sprite = SetProfileIcon(imageIndex);
 
         string winRateStr = (lose == 0) ? "100.0" : winRate.ToString("F1");
         if (win == 0)
@@ -61,8 +74,22 @@ public class ProfileController : MonoBehaviour
         int lose = gamePlayer.playerLose;
 
         float winRate = WinRate(win, lose);
-        otherAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(gamePlayer.SteamID));
-        //otherAvatar.sprite = SetProfileIcon(SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.SteamID)));
+
+        int imageIndex = SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.steamID_u));
+
+        for (int i = 0; i < 10; i++)
+        {
+            if (imageIndex != -1)
+            {
+                break;
+            }
+            else
+            {
+                imageIndex = SteamFriends.GetLargeFriendAvatar(new CSteamID(gamePlayer.steamID_u));
+            }
+        }
+
+        otherAvatar.sprite = SetProfileIcon(imageIndex);
 
         string winRateStr = (lose == 0) ? "100.0" : winRate.ToString("F1");
 

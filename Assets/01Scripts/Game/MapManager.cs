@@ -123,11 +123,6 @@ public class MapManager : MonoBehaviour
         {
             GameManager.instance.localGamePlayerScript.ChangeLoadingStatus();
         }
-
-        //if (AIManager.instance.SinglePlay)
-        //{
-        //    AIManager.instance.AI_Setting_Outpost();
-        //}
     }
 
     void MapColorChange(int x, int y, Tile tile)

@@ -39,7 +39,6 @@ public class Deck
         newDeck.index = this.index;
         newDeck.cards = cards.ToList();
         newDeck.representCard = this.representCard;
-
         return newDeck;
     }
 

@@ -207,13 +207,12 @@ public class Entity : MonoBehaviour
         card.onTurnEnd();
 
         TurnEffect_Resolve();
-
         UpdateStat();
     }
 
     void TurnEffect_Resolve()
     {
-        foreach (var effect in timeEffects)
+        foreach (Effect effect in timeEffects)
         {
             if (effect.duration != PERMANENT)
             {
@@ -225,6 +224,7 @@ public class Entity : MonoBehaviour
                 }
             }
         }
+        EntityManager.instance.EntityState(this);
     }
 
     public void UpdateStat()
@@ -237,6 +237,7 @@ public class Entity : MonoBehaviour
                 isDie = true;
             }
         }
+        EntityManager.instance.EntityState(this);
     }
 
     public int GetEffectiveValue(string stat)

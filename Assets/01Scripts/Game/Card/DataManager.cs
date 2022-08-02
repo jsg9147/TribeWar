@@ -27,7 +27,7 @@ public class DataManager : MonoBehaviour
     public int lastUseDeck;
 
     public UserInfo userInfo;
-    public string steamID;
+    public ulong steamID;
 
     public Deck Select_Deck;
 
@@ -54,7 +54,7 @@ public class DataManager : MonoBehaviour
     {
         tutorial_cards = new Dictionary<int, string>();
 
-        steamID = SteamUser.GetSteamID().ToString();
+        steamID = SteamUser.GetSteamID().m_SteamID;
         cardDatas = new List<Card>();
         Select_Deck = new Deck();
         userInfo = new UserInfo();
@@ -192,15 +192,15 @@ public class DataManager : MonoBehaviour
 
     public void Load_User_Data()
     {
-        if (ES3.KeyExists(SteamUser.GetSteamID().ToString()))
+        if (ES3.KeyExists(steamID.ToString()))
         {
-            string json = ES3.Load<string>(SteamUser.GetSteamID().ToString());
+            string json = ES3.Load<string>(steamID.ToString());
             userInfo = JsonUtility.FromJson<UserInfo>(json);
         }
         else
         {
             SaveUserInfo();
-            string json = ES3.Load<string>(SteamUser.GetSteamID().ToString());
+            string json = ES3.Load<string>(steamID.ToString());
             userInfo = JsonUtility.FromJson<UserInfo>(json);
         }
     }
@@ -231,19 +231,20 @@ public class DataManager : MonoBehaviour
     public void Load_Deck()
     {
         string deckJson;
-        if (ES3.KeyExists(SteamUser.GetSteamID().ToString() + "Deck"))
+        if (ES3.KeyExists(steamID.ToString() + "Deck"))
         {
-            if (ES3.Load<string>(SteamUser.GetSteamID().ToString() + "Deck") != null)
+            if (ES3.Load<string>(steamID.ToString() + "Deck") != null)
             {
-                deckJson = ES3.Load<string>(SteamUser.GetSteamID().ToString() + "Deck");
+                deckJson = ES3.Load<string>(steamID + "Deck");
                 playerDecks = JsonConvert.DeserializeObject<List<Deck>>(deckJson);
+
             }
         }
     }
 
     public void SaveUserInfo()
     {
-        userInfo.UserID = SteamUser.GetSteamID().ToString();
+        userInfo.UserID = steamID.ToString();
         string json = JsonUtility.ToJson(userInfo);
         
         ES3.Save(userInfo.UserID, json);

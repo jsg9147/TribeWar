@@ -204,55 +204,6 @@ public class DeckManager : MonoBehaviour
         }
 
     }
-    //public void Edit_Deck_Setup(Deck _deck)
-    //{
-    //    try
-    //    {
-    //        myEditCards = DataManager.instance.userCollection;
-    //        collectionList = new List<CollectionCard>();
-
-    //        myEditDeck = _deck;
-    //        deckTitleName_Input.text = myEditDeck.name;
-
-    //        Transform children = edit_CollectCard_Content.GetComponentInChildren<Transform>();
-
-    //        foreach (Transform child in children)
-    //        {
-    //            if (child != edit_CollectCard_Content)
-    //            {
-    //                child.gameObject.SetActive(false);
-    //            }
-    //        }
-
-    //        foreach (Card collectionCard in DataManager.instance.userCollection.Distinct())
-    //        {
-    //            int collectionCount = DataManager.instance.CollectionCount(collectionCard.id);
-    //            collectionCount = collectionCount - myEditDeck.CardCount(collectionCard.id);
-    //            if (collectionCount != 0)
-    //            {
-    //                GameObject cardObj = Instantiate(collectCardPrefab, edit_CollectCard_Content.transform);
-    //                cardObj.GetComponent<CollectionCard>().CardSetup(collectionCard, collectionCount);
-    //                collectionList.Add(cardObj.GetComponent<CollectionCard>());
-    //            }
-    //        }
-    //        foreach (string card_id in myEditDeck.cards)
-    //        {
-    //            Card card = DataManager.instance.CardData(card_id);
-    //            GameObject editCard = Instantiate(cardPrefab, myDeckCardContent.transform);
-    //            editCard.GetComponent<CardUI>().Setup(card, true);
-    //            myDeckCards.Add(card);
-    //        }
-
-    //        edit_CollectCard_Content.GetComponent<FlexibleGrid>().SetFlexibleGrid();
-    //        editDeckCount_text.text = myEditDeck.cards.Count.ToString();
-    //        myDeckCardContent.GetComponent<FlexibleGrid>().SetFlexibleGrid();
-    //    }
-    //    catch (System.NullReferenceException ex)
-    //    {
-    //        print(ex);
-    //    }
-
-    //}
 
     public void AddDeckButtonClick()
     {
@@ -319,33 +270,6 @@ public class DeckManager : MonoBehaviour
         editCard.CardCountPlus();
         editDeckCount_text.text = myEditDeck.cards.Count.ToString();
     }
-
-
-    //public void Remove_Card_Of_Deck(CardUI cardUI)
-    //{
-    //    Card card = cardUI.card;
-
-    //    myEditDeck.RemoveCard(card);
-
-    //    CollectionCard editCard = collectionList.Find(x => x.card.id == cardUI.card.id);
-
-    //    if (editCard != null)
-    //    {
-    //        editCard.CardCountPlus();
-    //    }
-    //    else
-    //    {
-    //        GameObject cardObj = Instantiate(collectCardPrefab, edit_CollectCard_Content.transform);
-    //        cardObj.GetComponent<CollectionCard>().CardSetup(card, 1);
-    //        collectionList.Add(cardObj.GetComponent<CollectionCard>());
-    //        edit_CollectCard_Content.GetComponent<FlexibleGrid>().SetFlexibleGrid();
-    //    }
-    //    myDeckCards.Remove(card);
-
-    //    editDeckCount_text.text = myEditDeck.cards.Count.ToString();
-
-    //    Destroy(cardUI.gameObject);
-    //}
     public void EnlargeCard_Setup(Card card)
     {
         if (!enlargeCardUI.gameObject.activeSelf)
@@ -363,46 +287,10 @@ public class DeckManager : MonoBehaviour
         }
         Edit_Deck_Setup(new Deck());
     }
-
-    
-
-    //public void Card_Add_In_My_EditDeck(CollectionCard collectionCard, bool isMax)
-    //{
-    //    Card card = collectionCard.card;
-    //    int addCount = 1;
-    //    if (myEditDeck.CardCount(card.id) >= card_Limit_Count)
-    //    {
-    //        return;
-    //    }
-
-    //    if (isMax)
-    //    {
-    //        addCount = collectionCard.cardCount;
-    //    }
-
-    //    for (int i = 0; i < addCount; i++)
-    //    {
-    //        myEditDeck.SetCard(card);
-    //        collectionCard.CardCountMinus();
-
-    //        GameObject editCard = Instantiate(cardPrefab, myDeckCardContent.transform);
-    //        editCard.GetComponent<CardUI>().Setup(card, true);
-    //        myDeckCards.Add(card);
-    //    }
-
-    //    if (collectionCard.cardCount <= 0)
-    //    {
-    //        collectionList.Remove(collectionCard);
-    //        Destroy(collectionCard.gameObject);
-    //    }
-    //    editDeckCount_text.text = myEditDeck.cards.Count.ToString();
-    //    myDeckCardContent.GetComponent<FlexibleGrid>().SetFlexibleGrid();
-    //}
     public void Set_Represent_Card()
     {
         Card card = enlargeCardUI.card;
         myEditDeck.representCard = card.id;
-
     }
 
     public void Edit_Deck_Save()
@@ -414,7 +302,6 @@ public class DeckManager : MonoBehaviour
             LobbyUI.instance.DeckNoticeWindow();
             return; 
         }
-        DataManager.instance.SaveDeck(myEditDeck);
         myEditDeck.name = deckTitleName_Input.text;
         deckTitleName_Input.text = "";
 
@@ -424,6 +311,7 @@ public class DeckManager : MonoBehaviour
         }
 
         LobbyUI.instance.DeckEditorButtonClick();
+        DataManager.instance.SaveDeck(myEditDeck);
 
         Deck_Clear();
     }

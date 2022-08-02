@@ -13,7 +13,7 @@ public class MyEditDeck : MonoBehaviour
 
     public void MyDeckInfoSetup(Deck _deck)
     {
-        this.deck = _deck;
+        deck = _deck;
         Card represent = DataManager.instance.CardData(deck.representCard);
 
         title_text.text = deck.name;

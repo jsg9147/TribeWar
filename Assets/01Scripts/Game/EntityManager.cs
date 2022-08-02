@@ -290,6 +290,7 @@ public class EntityManager : MonoBehaviour
         
         effect_Count = 0;
         CountTMP_Update();
+        UpdateEntitiesState();
     }
 
     // 카드 소환시 타일 좌표로 정렬시켜주는 함수
@@ -482,7 +483,7 @@ public class EntityManager : MonoBehaviour
         EntityAlignment(entity, summonTile.transformPos);
         EnlargeCardManager.instance.Setup(card, true);
         CountTMP_Update();
-        UpdateEntityState();
+        //UpdateEntityState();
     }
 
     // 카드 
@@ -673,6 +674,7 @@ public class EntityManager : MonoBehaviour
         foreach (Entity entity in tributeEntities)
         {
             entity.isDie = true;
+            EntityState(entity);
         }
 
         Tile targetTile = MapManager.instance.coordinateTile(entityCoordinateData);
@@ -716,7 +718,7 @@ public class EntityManager : MonoBehaviour
             effectManager.EffectSolve(card_id, isMine);
         }
 
-        UpdateEntityState();
+        //UpdateEntityState();
 
         tributeEntities.Clear();
         cardCost = 0;
@@ -817,15 +819,12 @@ public class EntityManager : MonoBehaviour
             targetTile = MapManager.instance.mapData[movePos.x, movePos.y];
         }
 
-        print(effectCard.id);
-
         foreach (Effect effect in effectCard.ability.effects)
         {
-            print(entity.name);
             effect.Resolve(this, entity, targetTile);
         }
 
-        UpdateEntityState();
+        //UpdateEntityState();
         effectCard = null;
         MapManager.instance.MapTileInit();
     }
@@ -848,11 +847,11 @@ public class EntityManager : MonoBehaviour
         Entity target_Entity = All_Entities.Find(x => x.id == entity_Id);
         effectManager.ReceiveRandomEffect(target_Entity, card_id); // jsg
 
-        UpdateEntityState();
+        //UpdateEntityState();
     }
 
-    // 몬스터 사망시 처리되는 함수
-    public void UpdateEntityState()
+    // 몬스터 사망시 처리되는 함수 이름 바꿔야함 entities 로
+    public void UpdateEntitiesState()
     {
         List<Entity> destroiedEntities = new List<Entity>();
 
@@ -871,38 +870,27 @@ public class EntityManager : MonoBehaviour
             }
         }
 
-        //foreach (Entity playerEntity in playerEntities)
-        //{
-        //    if (playerEntity.isDie)
-        //    {
-        //        if (playerEntity.card.ability.effect_Time == EffectTime.Activated)
-        //        {
-        //            effectManager.ReverseEffect(playerEntity, All_Entities);
-        //        }
-        //        MapManager.instance.mapData[playerEntity.coordinate.x, playerEntity.coordinate.y].onEntity = null;
-        //        MapManager.instance.mapData[playerEntity.coordinate.x, playerEntity.coordinate.y].tileState = TileState.empty;
-        //        GoToGraveyard(playerEntity);
-        //        destroiedEntities.Add(playerEntity);
-        //    }
-        //}
-
-        //foreach (Entity opponentEntity in opponentEntities)
-        //{
-        //    if (opponentEntity.isDie)
-        //    {
-        //        if (opponentEntity.card.ability.effect_Time == EffectTime.Activated)
-        //        {
-        //            effectManager.ReverseEffect(opponentEntity, All_Entities);
-        //        }
-        //        MapManager.instance.mapData[opponentEntity.coordinate.x, opponentEntity.coordinate.y].onEntity = null;
-        //        MapManager.instance.mapData[opponentEntity.coordinate.x, opponentEntity.coordinate.y].tileState = TileState.empty;
-        //        GoToGraveyard(opponentEntity);
-        //        destroiedEntities.Add(opponentEntity);
-        //    }
-        //}
-
         foreach (Entity entity in destroiedEntities)
         {
+            if (playerEntities.Contains(entity))
+            {
+                playerEntities.Remove(entity);
+            }
+            else if (opponentEntities.Contains(entity))
+            {
+                opponentEntities.Remove(entity);
+            }
+        }
+    }
+
+    public void EntityState(Entity entity)
+    {
+        if (entity.isDie)
+        {
+            MapManager.instance.mapData[entity.coordinate.x, entity.coordinate.y].onEntity = null;
+            MapManager.instance.mapData[entity.coordinate.x, entity.coordinate.y].tileState = TileState.empty;
+            GoToGraveyard(entity);
+
             if (playerEntities.Contains(entity))
             {
                 playerEntities.Remove(entity);
@@ -989,7 +977,7 @@ public class EntityManager : MonoBehaviour
                         attacker.Damaged(defenderBP);
                         defender.Damaged(attackerBP);
                         Destroy(spawnedVFX, 5f);
-                        UpdateEntityState();
+                        //UpdateEntityState();
                     }).OnComplete(() => AttackCallback(attacker, defender));
             
         }
@@ -1005,7 +993,7 @@ public class EntityManager : MonoBehaviour
                     }).OnComplete(() => Destroy(bullet, 1f));
 
             defender.Damaged(attackerBP);
-            UpdateEntityState();
+            //UpdateEntityState();
         }
 
         // 러너 기능이 사라져서 지금 구현 안되어 있음
@@ -1089,7 +1077,7 @@ public class EntityManager : MonoBehaviour
 
         if (defender.isDie)
         {
-            UpdateEntityState();
+            //UpdateEntityState();
             defender.bottomTile.tileState = TileState.empty;
             if (attacker.isDie == false)
             {
@@ -1175,7 +1163,7 @@ public class EntityManager : MonoBehaviour
                 }).OnComplete(() => CheckGameResult());
         }
         attacker.attackable = false;
-        UpdateEntityState();
+        //UpdateEntityState();
     }
 
     void ResolverEffect(Entity attacker, Entity defender)

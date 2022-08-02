@@ -33,7 +33,7 @@ public class MyNetworkManager : NetworkManager
 
             GamePlayerInstance.IsGameLeader = isGameLeader;
             GamePlayerInstance.ConnectionId = conn.connectionId;
-            GamePlayerInstance.steamID_u = (ulong)SteamMatchmaking.GetLobbyMemberByIndex(SteamLobby.instance.currentLobby, GamePlayers.Count);
+            //GamePlayerInstance.steamID_u = (ulong)SteamMatchmaking.GetLobbyMemberByIndex(SteamLobby.instance.currentLobby, GamePlayers.Count);
             //GamePlayerInstance.playerNumber = GamePlayers.Count;
 
             NetworkServer.AddPlayerForConnection(conn, GamePlayerInstance.gameObject);
@@ -140,8 +140,7 @@ public class MyNetworkManager : NetworkManager
         {
             GamePlayer player = conn.identity.GetComponent<GamePlayer>();
 
-            //if (player.SteamID != SteamUser.GetSteamID().m_SteamID)
-            if (player.SteamID != SteamUser.GetSteamID())
+            if (player.steamID_u != SteamUser.GetSteamID().m_SteamID)
             {
                 if (GameManager.instance != null)
                     GameManager.instance.GameResult(true);

@@ -25614,7 +25614,7 @@ MonoBehaviour:
   entityManager: {fileID: 1085240670}
   mapManager: {fileID: 354489930}
   gameManager: {fileID: 308384223}
-  turnManager: {fileID: 0}
+  turnManager: {fileID: 1811655194}
   hands: []
 --- !u!4 &1435007579
 Transform:

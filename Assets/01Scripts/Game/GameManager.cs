@@ -126,8 +126,7 @@ public class GameManager : MonoBehaviour
         {
             foreach (GamePlayer player in Game.GamePlayers)
             {
-                //if (player.SteamID == Steamworks.SteamUser.GetSteamID().m_SteamID
-                if(player.SteamID == Steamworks.SteamUser.GetSteamID())
+                if(player.steamID_u == Steamworks.SteamUser.GetSteamID().m_SteamID)
                 {
                     profileController.SetMyProfile(player);
                 }
@@ -136,6 +135,7 @@ public class GameManager : MonoBehaviour
                     profileController.SetOtherProfile(player);
                 }
             }
+
             profileController.BlackPanelSetActive(false);
             yield return new WaitForSeconds(5f);
 

@@ -63,6 +63,7 @@ public class PlayScreen : MonoBehaviour
         UserInfo user = DataManager.instance.userInfo;
         float winRate = user.WinRate();
         string winRateStr = (user.Lose == 0) ? "100.0" : winRate.ToString("F1");
+
         if (user.Win == 0)
             winRateStr = "0.00";
 

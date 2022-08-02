@@ -128,7 +128,7 @@ public class EffectManager : MonoBehaviour
             }
             entityManager.effect_Count++;
         }
-        entityManager.UpdateEntityState();
+        //entityManager.UpdateEntityState();
     }
 
     void EffectVFX_Instantiate(Entity entity, Effect effect)
@@ -310,8 +310,7 @@ public class EffectManager : MonoBehaviour
                 return;
         }
 
-        entityManager.UpdateEntityState();
-        // gameLog.Log_Sorter(LogCategory.Magic, effectCard, isMine); // 로그 추가
+        //entityManager.UpdateEntityState();
     }
 
 
